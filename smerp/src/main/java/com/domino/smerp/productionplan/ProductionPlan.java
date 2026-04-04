@@ -52,7 +52,7 @@ public class ProductionPlan extends BaseEntity {
   @Builder.Default
   private boolean isDeleted = false;
 
-  @Column(name = "document_no")
+  @Column(name = "document_no", nullable = false)
   private String documentNo;
 
   @Column(precision = 12, scale = 3)
@@ -62,15 +62,15 @@ public class ProductionPlan extends BaseEntity {
   //user
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
-      name = "user_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          name = "user_id",
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private User user;
 
   //주문 품목(교차테이블)
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "item_order_id",
-    foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private ItemOrder itemOrder;
 

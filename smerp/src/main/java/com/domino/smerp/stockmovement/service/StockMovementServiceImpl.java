@@ -51,8 +51,8 @@ public class StockMovementServiceImpl implements StockMovementService {
     }
 
     return StockMovementListResponse.builder()
-        .stockMovementResponses(stockMovementResponses)
-        .build();
+            .stockMovementResponses(stockMovementResponses)
+            .build();
   }
 
 
@@ -61,10 +61,10 @@ public class StockMovementServiceImpl implements StockMovementService {
   public void createStockMovement(CreateStockMovementRequest createStockMovementRequest) {
 
     Item item = itemRepository.findById(createStockMovementRequest.getItemId())
-        .orElseThrow(() -> new EntityNotFoundException("item not found by id"));
+            .orElseThrow(() -> new EntityNotFoundException("item not found by id"));
 
     User user = userRepository.findById(createStockMovementRequest.getUserId())
-        .orElseThrow(() -> new EntityNotFoundException("user not found by id"));
+            .orElseThrow(() -> new EntityNotFoundException("user not found by id"));
 
     //음수, 양수
     BigDecimal movedQty = createStockMovementRequest.getMovedQty();
@@ -78,7 +78,7 @@ public class StockMovementServiceImpl implements StockMovementService {
     //당사가 구매를 한다, 반품당함 (-) => inbound
     if(movedQty.compareTo(BigDecimal.ZERO) < 0) {
       createInboundStockMovement(item, movedQty, user, createStockMovementRequest.getTransactionType(), documentNo, totalQty);
-  }
+    }
 
     //판매를 한다, 폐기를 한다 (+) => outbound
 
@@ -93,41 +93,41 @@ public class StockMovementServiceImpl implements StockMovementService {
 
   //구매를 한다, 반품을 한다 (- 로 받지만 실제로 창고에는 들어옴)
   public List<StockMovement> createInboundStockMovement(
-      Item item, BigDecimal movedQty, User user, TransactionType transactionType, String documentNo, BigDecimal totalQty) {
+          Item item, BigDecimal movedQty, User user, TransactionType transactionType, String documentNo, BigDecimal totalQty) {
 
     movedQty = movedQty.abs(); //(-) 로 받으므로 +가 됨
 
     List<Stock> stocks = stockService.allocateStock(
-        item.getItemId(),
-        movedQty
+            item.getItemId(),
+            movedQty
     );
 
     List<StockMovement> stockMovements = new ArrayList<>();
 
     SrcDocType srcDocType = transactionType == TransactionType.INBOUND
-        ? SrcDocType.PURCHASE
-        : SrcDocType.NONE;
+            ? SrcDocType.PURCHASE
+            : SrcDocType.NONE;
 
 
     String srcDocNo = documentNo;
     if(srcDocType.equals(SrcDocType.PURCHASE))
-        srcDocNo = documentNo + "PURCHASE";
+      srcDocNo = documentNo + "PURCHASE";
 
     for(Stock stock : stocks){
       //inbound
 
       //재고 수불 생성
       StockMovement stockMovement = StockMovement.builder()
-          .departWarehouse(null)
-          .arriveWarehouse(stock.getLocation().getWarehouse())
-          .user(user)
-          .lotNumber(stock.getLotNumber())
-          .movedQty(stock.getCurrentQty())
-          .srcDocType(srcDocType)
-          .srcDocNo(srcDocNo)
-          .totalQty(stock.getQty())
-          .transactionType(transactionType) //inbound or return
-          .build();
+              .departWarehouse(null)
+              .arriveWarehouse(stock.getLocation().getWarehouse())
+              .user(user)
+              .lotNumber(stock.getLotNumber())
+              .movedQty(stock.getCurrentQty())
+              .srcDocType(srcDocType)
+              .srcDocNo(srcDocNo)
+              .totalQty(stock.getQty())
+              .transactionType(transactionType) //inbound or return
+              .build();
       stockMovements.add(stockMovement);
       stockMovementRepository.save(stockMovement);
     }
@@ -146,8 +146,8 @@ public class StockMovementServiceImpl implements StockMovementService {
     BigDecimal runningTotalQty = totalQty;
 
     List<Stock> stocks = stockService.allocateStock(
-        workOrder.getItem().getItemId(),
-        workOrder.getQty()
+            workOrder.getItem().getItemId(),
+            workOrder.getQty()
     );
 
     List<StockMovement> stockMovements = new ArrayList<>();
@@ -158,8 +158,8 @@ public class StockMovementServiceImpl implements StockMovementService {
     //stock movement에는 production result, document no 필수임
     //document no 함수 받기 전이므로 null 처리
     String srcDocNo = (workOrder.getDocumentNo()) != null
-        ? workOrder.getDocumentNo() + "PRODUCED"
-        : "";
+            ? workOrder.getDocumentNo() + "PRODUCED"
+            : "";
 
     for(Stock stock : stocks){
 
@@ -167,17 +167,17 @@ public class StockMovementServiceImpl implements StockMovementService {
 
       //재고 수불 생성
       StockMovement stockMovement = StockMovement.builder()
-          .departWarehouse(workOrder.getWarehouse())
-          .arriveWarehouse(stock.getLocation().getWarehouse())
-          //.user(user)
-          .lotNumber(stock.getLotNumber())
-          .transactionType(TransactionType.TRANSFER)
-          .movedQty(stock.getQty())
-          //각 재고 반영시마다 total 구하고 추가
-          .totalQty(runningTotalQty)
-          .srcDocType(SrcDocType.PRODUCED)
-          .srcDocNo(srcDocNo)
-          .build();
+              .departWarehouse(workOrder.getWarehouse())
+              .arriveWarehouse(stock.getLocation().getWarehouse())
+              //.user(user)
+              .lotNumber(stock.getLotNumber())
+              .transactionType(TransactionType.TRANSFER)
+              .movedQty(stock.getQty())
+              //각 재고 반영시마다 total 구하고 추가
+              .totalQty(runningTotalQty)
+              .srcDocType(SrcDocType.PRODUCED)
+              .srcDocNo(srcDocNo)
+              .build();
 
       stockMovements.add(stockMovement);
       stockMovementRepository.save(stockMovement);
@@ -255,10 +255,10 @@ public class StockMovementServiceImpl implements StockMovementService {
   public StockMovementResponse createAdjustStockMovement(UpdateStockMovementRequest updateStockMovementRequest){
 
     Item item = itemRepository.findByName(updateStockMovementRequest.getItemName())
-        .orElseThrow(() -> new EntityNotFoundException("item not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("item not found by name"));
 
     User user = userRepository.findByName(updateStockMovementRequest.getUserName())
-        .orElseThrow(() -> new EntityNotFoundException("user not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("user not found by name"));
 
     BigDecimal movedQty = updateStockMovementRequest.getMovedQty();
 
@@ -267,16 +267,16 @@ public class StockMovementServiceImpl implements StockMovementService {
     LotNumber lotNumber = lotNumberService.createLotNumberForStock(item, movedQty);
 
     StockMovement stockMovement = StockMovement.builder()
-        .departWarehouse(null)
-        .arriveWarehouse(null)
-        .user(user)
-        .lotNumber(lotNumber)
-        .movedQty(movedQty) //음수인 경우 -> response용 구별을 위해 음수 그대로
-        .srcDocType(null)
-        .srcDocNo(null)
-        .totalQty(totalQty.add(movedQty)) //양수 or 음수 둘다 반영됨
-        .transactionType(TransactionType.ADJUSTMENT)
-        .build();
+            .departWarehouse(null)
+            .arriveWarehouse(null)
+            .user(user)
+            .lotNumber(lotNumber)
+            .movedQty(movedQty) //음수인 경우 -> response용 구별을 위해 음수 그대로
+            .srcDocType(null)
+            .srcDocNo(null)
+            .totalQty(totalQty.add(movedQty)) //양수 or 음수 둘다 반영됨
+            .transactionType(TransactionType.ADJUSTMENT)
+            .build();
 
     stockMovementRepository.save(stockMovement);
 
@@ -305,26 +305,22 @@ public class StockMovementServiceImpl implements StockMovementService {
     }
 
     return StockMovementResponse.builder()
-        .companyName(companyName)
-        //stock movement - 구매, 판매, 생산에 대해 모두 lot no 가짐 -> adjustment에서는 x
-        .itemName(itemName)
-        .inboundQty(
-            stockMovement.getMovedQty().compareTo(BigDecimal.ZERO) > 0
-                ? stockMovement.getMovedQty()
-                : BigDecimal.ZERO
-        )
-        .outboundQty(
-            stockMovement.getMovedQty().compareTo(BigDecimal.ZERO) < 0
-                ? stockMovement.getMovedQty()
-                : BigDecimal.ZERO
-        )
-        .totalQty(stockMovement.getTotalQty())
-        .createdAt(stockMovement.getCreatedAt())
-        .build();
+            .companyName(companyName)
+            //stock movement - 구매, 판매, 생산에 대해 모두 lot no 가짐 -> adjustment에서는 x
+            .itemName(itemName)
+            .inboundQty(
+                    stockMovement.getMovedQty().compareTo(BigDecimal.ZERO) > 0
+                            ? stockMovement.getMovedQty()
+                            : BigDecimal.ZERO
+            )
+            .outboundQty(
+                    stockMovement.getMovedQty().compareTo(BigDecimal.ZERO) < 0
+                            ? stockMovement.getMovedQty()
+                            : BigDecimal.ZERO
+            )
+            .totalQty(stockMovement.getTotalQty())
+            .createdAt(stockMovement.getCreatedAt())
+            .build();
   }
-
-
-
-
 
 }

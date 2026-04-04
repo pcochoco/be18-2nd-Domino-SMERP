@@ -30,10 +30,10 @@ public class ProductionResultController {
   //상세 조회
   @GetMapping("/{production-result-id}")
   public ResponseEntity<ProductionResultResponse> getProductionResult(
-      @PathVariable("production-result-id") Long productionResultId){
+          @PathVariable("production-result-id") Long productionResultId){
     return ResponseEntity.status(200).body(productionResultService.getProductionResultById(productionResultId));
   }
-//
+  //
 //  //생성
 //  @GetMapping
 //  public ResponseEntity<ProductionResultResponse> getProductionResult(
@@ -44,10 +44,10 @@ public class ProductionResultController {
   //수정
   @PatchMapping("/{production-result-id}")
   public ResponseEntity<ProductionResultResponse> getProductionResult(
-      @PathVariable("production-result-id") Long productionResultId,
-      @RequestBody UpdateProductionResultRequest updateProductionResultRequest){
+          @PathVariable("production-result-id") Long productionResultId,
+          @RequestBody UpdateProductionResultRequest updateProductionResultRequest){
     return ResponseEntity.ok().body(productionResultService.updateProductionResult(
-        productionResultId, updateProductionResultRequest)
+            productionResultId, updateProductionResultRequest)
     );
   }
 

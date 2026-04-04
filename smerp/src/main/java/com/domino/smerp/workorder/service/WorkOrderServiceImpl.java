@@ -74,8 +74,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     }
 
     return WorkOrderListResponse.builder()
-        .workOrderResponses(workOrderResponses)
-        .build();
+            .workOrderResponses(workOrderResponses)
+            .build();
 
   }
 
@@ -92,7 +92,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     //id 유효한데 soft delete 상태 x
     WorkOrder workOrder = workOrderRepository.findByIdAndIsDeletedFalse(id)
-        .orElseThrow(() -> new EntityNotFoundException("No work order of id"));
+            .orElseThrow(() -> new EntityNotFoundException("No work order of id"));
 
     return toWorkOrderResponse(workOrder);
   }
@@ -110,8 +110,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     }
 
     return CurrentWorkOrderListResponse.builder()
-        .currentWorkOrderResponses(currentWorkOrderResponses)
-        .build();
+            .currentWorkOrderResponses(currentWorkOrderResponses)
+            .build();
   }
 
   //요청에 의한 생성
@@ -127,31 +127,31 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     System.out.println(createWorkOrderRequest.getPlanAt());
     */
     Item item = itemRepository.findByName(createWorkOrderRequest.getItemName())
-        .orElseThrow(() -> new EntityNotFoundException("item not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("item not found by name"));
 
     Warehouse warehouse = warehouseRepository.findByName(createWorkOrderRequest.getFactoryName())
-        .orElseThrow(() -> new EntityNotFoundException("warehouse not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("warehouse not found by name"));
 
     ProductionPlan productionPlan = productionPlanRepository.findById(createWorkOrderRequest.getProductionPlanId())
-        .orElseThrow(() -> new EntityNotFoundException("production plan not found by id"));
+            .orElseThrow(() -> new EntityNotFoundException("production plan not found by id"));
 
     User user = userRepository.findByName(createWorkOrderRequest.getUserName())
-        .orElseThrow(() -> new EntityNotFoundException("user not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("user not found by name"));
 
     String documentNo = generateDocumentNoWithRetry(LocalDate.now());
 
 
     //유일함 x
     WorkOrder workOrder = WorkOrder.builder()
-        .item(item)
-        .qty(createWorkOrderRequest.getPlanQty())
-        .productionPlan(productionPlan)
-        .warehouse(warehouse)
-        .status(Status.PENDING)
-        .planAt(createWorkOrderRequest.getPlanAt())
-        .documentNo(documentNo)
-        .isDeleted(false)
-        .build();
+            .item(item)
+            .qty(createWorkOrderRequest.getPlanQty())
+            .productionPlan(productionPlan)
+            .warehouse(warehouse)
+            .status(Status.PENDING)
+            .planAt(createWorkOrderRequest.getPlanAt())
+            .documentNo(documentNo)
+            .isDeleted(false)
+            .build();
 
     workOrderRepository.save(workOrder);
 
@@ -215,25 +215,25 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   @Override
   @Transactional(readOnly = true)
   public PageResponse<SearchWorkOrderListResponse> searchWorkOrders(
-      final SearchWorkOrderRequest keyword,
-      final Pageable pageable)
+          final SearchWorkOrderRequest keyword,
+          final Pageable pageable)
   {
     return PageResponse.from(
-        workOrderRepository
-            .searchWorkOrders(keyword, pageable)
-            .map(SearchWorkOrderListResponse::fromEntity));
+            workOrderRepository
+                    .searchWorkOrders(keyword, pageable)
+                    .map(SearchWorkOrderListResponse::fromEntity));
   }
 
   //수정 요청
   @Override
   @Transactional
   public WorkOrderResponse updateWorkOrder(final Long id,
-      final UpdateWorkOrderRequest updateWorkOrderRequest) {
+                                           final UpdateWorkOrderRequest updateWorkOrderRequest) {
 
 
     //id 유효
     WorkOrder workOrder = workOrderRepository.findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("No work order of id: " + id));
+            .orElseThrow(() -> new EntityNotFoundException("No work order of id: " + id));
 
     if(workOrder.getStatus().equals(Status.COMPLETED)) {
       throw new EntityNotFoundException("work order 작업 완료, 수정 불가합니다");
@@ -242,59 +242,59 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     //유효성 체크 필요 x
 
     Item item = (updateWorkOrderRequest.getItemName() != null)
-        ? itemRepository.findByName(updateWorkOrderRequest.getItemName())
-        .orElseThrow(() -> new EntityNotFoundException("item not found by name"))
-        : workOrder.getItem();
+            ? itemRepository.findByName(updateWorkOrderRequest.getItemName())
+            .orElseThrow(() -> new EntityNotFoundException("item not found by name"))
+            : workOrder.getItem();
 
     Warehouse warehouse = (updateWorkOrderRequest.getFactoryName() != null)
-        ? warehouseRepository.findByName(updateWorkOrderRequest.getFactoryName())
-        .orElseThrow(() -> new EntityNotFoundException("warehouse not found by name"))
-        : workOrder.getWarehouse();
+            ? warehouseRepository.findByName(updateWorkOrderRequest.getFactoryName())
+            .orElseThrow(() -> new EntityNotFoundException("warehouse not found by name"))
+            : workOrder.getWarehouse();
 
     //production plan : update request의 plan 변경 시 반영 용도
     ProductionPlan productionPlan = (updateWorkOrderRequest.getProductionPlanId() != null)
-        ? productionPlanRepository.findById(updateWorkOrderRequest.getProductionPlanId())
-        .orElseThrow(() -> new EntityNotFoundException("production plan not found by id"))
-        : workOrder.getProductionPlan();
+            ? productionPlanRepository.findById(updateWorkOrderRequest.getProductionPlanId())
+            .orElseThrow(() -> new EntityNotFoundException("production plan not found by id"))
+            : workOrder.getProductionPlan();
 
     //user : update request의 username을 plan에 반영하는 용도
     User user = (updateWorkOrderRequest.getUserName() != null)
-        ? userRepository.findByName(updateWorkOrderRequest.getUserName())
-        .orElseThrow(() -> new EntityNotFoundException("user not found by name"))
-        : productionPlan.getUser();
+            ? userRepository.findByName(updateWorkOrderRequest.getUserName())
+            .orElseThrow(() -> new EntityNotFoundException("user not found by name"))
+            : productionPlan.getUser();
 
 
     WorkOrder updatedWorkOrder = WorkOrder.builder()
-        .id(workOrder.getId())
-        .item(item)
-        .warehouse(warehouse)
-        .productionPlan(productionPlan)
-        .qty(
-            updateWorkOrderRequest.getPlanQty() != null ?
-                updateWorkOrderRequest.getPlanQty() : workOrder.getQty()
-        )
-        .documentNo(workOrder.getDocumentNo())
-        .status(
-            updateWorkOrderRequest.getStatus() != null ?
-                updateWorkOrderRequest.getStatus() : workOrder.getStatus()
-        )
+            .id(workOrder.getId())
+            .item(item)
+            .warehouse(warehouse)
+            .productionPlan(productionPlan)
+            .qty(
+                    updateWorkOrderRequest.getPlanQty() != null ?
+                            updateWorkOrderRequest.getPlanQty() : workOrder.getQty()
+            )
+            .documentNo(workOrder.getDocumentNo())
+            .status(
+                    updateWorkOrderRequest.getStatus() != null ?
+                            updateWorkOrderRequest.getStatus() : workOrder.getStatus()
+            )
 
-        .planAt(
-            updateWorkOrderRequest.getPlanAt() != null ?
-                updateWorkOrderRequest.getPlanAt() : workOrder.getPlanAt()
-        )
+            .planAt(
+                    updateWorkOrderRequest.getPlanAt() != null ?
+                            updateWorkOrderRequest.getPlanAt() : workOrder.getPlanAt()
+            )
 
-        .producedAt(updateWorkOrderRequest.getProducedAt() != null ?
-            updateWorkOrderRequest.getProducedAt() : workOrder.getProducedAt()
-        )
+            .producedAt(updateWorkOrderRequest.getProducedAt() != null ?
+                    updateWorkOrderRequest.getProducedAt() : workOrder.getProducedAt()
+            )
 
-        .isDeleted(false)
-        .build();
+            .isDeleted(false)
+            .build();
 
     //plan에 수정 반영될 부분
     productionPlan.setUser(user);
     productionPlan.setRemark(updateWorkOrderRequest.getRemark() != null ?
-        updateWorkOrderRequest.getRemark() : productionPlan.getRemark());
+            updateWorkOrderRequest.getRemark() : productionPlan.getRemark());
 
 
     if(updatedWorkOrder.getStatus() == Status.APPROVED) {
@@ -323,7 +323,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     //id 유효, 이미 soft delete x
     //7일 후 삭제
     WorkOrder workOrder = workOrderRepository.findById(id)
-        .orElseThrow(() -> new  EntityNotFoundException("No work order of id: "));
+            .orElseThrow(() -> new  EntityNotFoundException("No work order of id: "));
 
     workOrder.setIsDeleted(true);
 
@@ -335,7 +335,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   public void hardDeleteWorkOrder(final Long id){
 
     WorkOrder workOrder = workOrderRepository.findById(id)
-        .orElseThrow(() -> new  EntityNotFoundException("No work order of id: "));
+            .orElseThrow(() -> new  EntityNotFoundException("No work order of id: "));
 
     if(!workOrder.isDeleted())
       throw new IllegalArgumentException("work order is not softly deleted");
@@ -365,20 +365,20 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     String companyName = (client != null) ? client.getCompanyName() : null;
 
     return WorkOrderResponse.builder()
-        .id(workOrder.getId())
-        .companyName(companyName)
-        .userName(userName)
-        .documentNo(workOrder.getDocumentNo())
-        .itemName(workOrder.getItem().getName() != null ?
-            workOrder.getItem().getName() : null) //null 가능
-        .status(workOrder.getStatus())
-        .planQty(workOrder.getQty())
-        .producedQty(producedQty) //없다면 0
-        .planAt(workOrder.getPlanAt() != null ?
-            workOrder.getPlanAt() : null) //null 가능
-        .producedAt(producedAt)
-        .remark(workOrder.getProductionPlan().getRemark())
-        .build();
+            .id(workOrder.getId())
+            .companyName(companyName)
+            .userName(userName)
+            .documentNo(workOrder.getDocumentNo())
+            .itemName(workOrder.getItem().getName() != null ?
+                    workOrder.getItem().getName() : null) //null 가능
+            .status(workOrder.getStatus())
+            .planQty(workOrder.getQty())
+            .producedQty(producedQty) //없다면 0
+            .planAt(workOrder.getPlanAt() != null ?
+                    workOrder.getPlanAt() : null) //null 가능
+            .producedAt(producedAt)
+            .remark(workOrder.getProductionPlan().getRemark())
+            .build();
   }
 
   public CurrentWorkOrderResponse toCurrentWorkOrderResponse(final WorkOrder workOrder) {
@@ -401,17 +401,17 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     String companyName = (client != null) ? client.getCompanyName() : null;
 
     return CurrentWorkOrderResponse.builder()
-        .id(workOrder.getId())
-        .companyName(companyName)
-        .userName(userName)
-        .documentNo(workOrder.getDocumentNo())
-        .itemName(workOrder.getItem().getName() != null ?
-            workOrder.getItem().getName() : null) //null 가능
-        .status(workOrder.getStatus())
-        .planQty(workOrder.getQty())
-        .planAt(workOrder.getPlanAt() != null ?
-            workOrder.getPlanAt() : null) //null 가능
-        .build();
+            .id(workOrder.getId())
+            .companyName(companyName)
+            .userName(userName)
+            .documentNo(workOrder.getDocumentNo())
+            .itemName(workOrder.getItem().getName() != null ?
+                    workOrder.getItem().getName() : null) //null 가능
+            .status(workOrder.getStatus())
+            .planQty(workOrder.getQty())
+            .planAt(workOrder.getPlanAt() != null ?
+                    workOrder.getPlanAt() : null) //null 가능
+            .build();
 
   }
 

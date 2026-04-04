@@ -28,7 +28,7 @@ public class LocationServiceImpl implements LocationService {
   public void createLocation(final Long warehouseId) {
 
     Warehouse warehouse = warehouseRepository.findById(warehouseId)
-        .orElseThrow(() -> new EntityNotFoundException("창고를 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("창고를 찾을 수 없습니다."));
 
     List<String> racks = parseFixedRange("R", 1, 10);
     List<String> levels = parseFixedRange("L", 1, 2);
@@ -96,24 +96,24 @@ public class LocationServiceImpl implements LocationService {
   public LocationListResponse getUnFilledLocations(final Long warehouseId) {
 
     List<Location> unFilledLocations = locationRepository.findAllByWarehouseIdAndFilledFalse(
-        warehouseId);
+            warehouseId);
 
     List<LocationResponse> responses = new ArrayList<>();
 
     for (Location location : unFilledLocations) {
 
       responses.add(LocationResponse.builder()
-          .id(location.getId())
-          .rackNo(location.getRackNo())
-          .levelNo(location.getLevelNo())
-          .binNo(location.getBinNo())
-          .filled(location.isFilled())
-          .build());
+              .id(location.getId())
+              .rackNo(location.getRackNo())
+              .levelNo(location.getLevelNo())
+              .binNo(location.getBinNo())
+              .filled(location.isFilled())
+              .build());
     }
 
     return LocationListResponse.builder()
-        .locationResponses(responses)
-        .build();
+            .locationResponses(responses)
+            .build();
 
   }
 
@@ -128,7 +128,7 @@ public class LocationServiceImpl implements LocationService {
 
       //유효 x id
       Location location = locationRepository.findById(id)
-          .orElseThrow(() -> new EntityNotFoundException("id에 해당하는 location 없음"));
+              .orElseThrow(() -> new EntityNotFoundException("id에 해당하는 location 없음"));
 
       location.setFilled(true);
       locationIdListResponse.getLocationIds().add(location.getId());
@@ -148,7 +148,7 @@ public class LocationServiceImpl implements LocationService {
 
     for (Long id : locationIdListRequest.getLocationIds()) {
       Location location = locationRepository.findById(id)
-          .orElseThrow(() -> new EntityNotFoundException("id에 해당하는 location 없음"));
+              .orElseThrow(() -> new EntityNotFoundException("id에 해당하는 location 없음"));
 
       location.setFilled(false);
       locationIdListResponse.getLocationIds().add(location.getId());
@@ -161,12 +161,12 @@ public class LocationServiceImpl implements LocationService {
 
   private LocationResponse toLocationResponse(final Location location) {
     return LocationResponse.builder()
-        .id(location.getId())
-        .rackNo(location.getRackNo())
-        .levelNo(location.getLevelNo())
-        .binNo(location.getBinNo())
-        .filled(location.isFilled())
-        .build();
+            .id(location.getId())
+            .rackNo(location.getRackNo())
+            .levelNo(location.getLevelNo())
+            .binNo(location.getBinNo())
+            .filled(location.isFilled())
+            .build();
 
   }
 }

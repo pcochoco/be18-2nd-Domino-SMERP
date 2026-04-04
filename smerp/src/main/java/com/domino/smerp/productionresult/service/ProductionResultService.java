@@ -19,8 +19,8 @@ public interface ProductionResultService {
   ProductionResult createProductionResultByWorkOrder(WorkOrder workOrder, BigDecimal producedQty);
 
   ProductionResultResponse updateProductionResult(
-      final Long id,
-      final UpdateProductionResultRequest updateProductionResultRequest
+          final Long id,
+          final UpdateProductionResultRequest updateProductionResultRequest
   );
 
   void softDeleteProductionResult(final Long id);

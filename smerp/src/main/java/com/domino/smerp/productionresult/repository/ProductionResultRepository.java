@@ -16,9 +16,9 @@ public interface ProductionResultRepository extends JpaRepository<ProductionResu
   Optional<ProductionResult> findByIdAndIsDeletedFalse(Long id);
 
   @Query(value = "SELECT MAX(CAST(SUBSTRING_INDEX(p.document_no, '-', -1) AS UNSIGNED)) " +
-      "FROM `production_result` p " +
-      "WHERE p.document_no LIKE CONCAT(:prefix, '%')",
-      nativeQuery = true)
+          "FROM `production_result` p " +
+          "WHERE p.document_no LIKE CONCAT(:prefix, '%')",
+          nativeQuery = true)
   Optional<Integer> findMaxSequenceByPrefix(@Param("prefix") String prefix);
 
 }

@@ -54,9 +54,9 @@ public class ProductionResultServiceImpl implements ProductionResultService {
     }
 
     ProductionResultListResponse productionResultListResponse = ProductionResultListResponse.builder()
-        .productionResultResponses(productionResultResponses)
-        .totalQty(totalQty)
-        .build();
+            .productionResultResponses(productionResultResponses)
+            .totalQty(totalQty)
+            .build();
 
     return productionResultListResponse;
 
@@ -68,7 +68,7 @@ public class ProductionResultServiceImpl implements ProductionResultService {
   public ProductionResultResponse getProductionResultById(final Long id){
 
     ProductionResult productionResult = productionResultRepository.findByIdAndIsDeletedFalse(id)
-        .orElseThrow(() -> new EntityNotFoundException("production result not found by id"));
+            .orElseThrow(() -> new EntityNotFoundException("production result not found by id"));
 
     //soft delete 된 거 제외
     return toProductionResultResponse(productionResult);
@@ -87,17 +87,17 @@ public class ProductionResultServiceImpl implements ProductionResultService {
   public ProductionResultResponse createProductionResult(final CreateProductionResultRequest createProductionResultRequest){
 
     WorkOrder workOrder = workOrderRepository.findById(createProductionResultRequest.getWorkOrderId())
-        .orElseThrow(() -> new EntityNotFoundException("work order not found by id"));
+            .orElseThrow(() -> new EntityNotFoundException("work order not found by id"));
 
     Warehouse departWarehouse = warehouseRepository.findByName(createProductionResultRequest.getFactoryName())
-        .orElseThrow(() -> new EntityNotFoundException("warehouse not found by id"));
+            .orElseThrow(() -> new EntityNotFoundException("warehouse not found by id"));
 
     Item item = itemRepository.findByName(createProductionResultRequest.getItemName())
-        .orElseThrow(() -> new EntityNotFoundException("item not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("item not found by name"));
 
 
     User user = userRepository.findByName(createProductionResultRequest.getUserName())
-        .orElseThrow(() -> new EntityNotFoundException("user not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("user not found by name"));
 
 
     //production result entity로 create을 넣으면 인자가 너무 많아짐
@@ -112,14 +112,14 @@ public class ProductionResultServiceImpl implements ProductionResultService {
 
 
     ProductionResult productionResult = ProductionResult.builder()
-        .documentNo(documentNo)
-        .user(user)
-        .departWarehouse(departWarehouse)
-        .workOrder(workOrder)
-        .item(item) //품목 코드, 품목명, 규격 생략
-        .qty(createProductionResultRequest.getQty())
-        .isDeleted(false)
-        .build();
+            .documentNo(documentNo)
+            .user(user)
+            .departWarehouse(departWarehouse)
+            .workOrder(workOrder)
+            .item(item) //품목 코드, 품목명, 규격 생략
+            .qty(createProductionResultRequest.getQty())
+            .isDeleted(false)
+            .build();
     productionResultRepository.save(productionResult);
 
     //production result의 work order을 바탕으로 재고 수불 반영
@@ -137,21 +137,21 @@ public class ProductionResultServiceImpl implements ProductionResultService {
   @Transactional
   //작업지시 status complete으로 수정 시 production result 생성됨
   public ProductionResult createProductionResultByWorkOrder(
-      WorkOrder workOrder, BigDecimal producedQty){
+          WorkOrder workOrder, BigDecimal producedQty){
 
     String documentNo = generateDocumentNoWithRetry(LocalDate.now());
 
 
     //생산결과 생성
     ProductionResult productionResult = ProductionResult.builder()
-        .documentNo(documentNo)
-        .user(workOrder.getProductionPlan().getUser())
-        .departWarehouse(workOrder.getWarehouse())
-        .workOrder(workOrder)
-        .item(workOrder.getItem()) //품목 코드, 품목명, 규격 생략
-        .qty(producedQty)
-        .isDeleted(false)
-        .build();
+            .documentNo(documentNo)
+            .user(workOrder.getProductionPlan().getUser())
+            .departWarehouse(workOrder.getWarehouse())
+            .workOrder(workOrder)
+            .item(workOrder.getItem()) //품목 코드, 품목명, 규격 생략
+            .qty(producedQty)
+            .isDeleted(false)
+            .build();
 
     workOrder.setProductionResult(productionResult);
 
@@ -163,46 +163,46 @@ public class ProductionResultServiceImpl implements ProductionResultService {
   @Override
   @Transactional
   public ProductionResultResponse updateProductionResult(
-      final Long id,
-      final UpdateProductionResultRequest updateProductionResultRequest
+          final Long id,
+          final UpdateProductionResultRequest updateProductionResultRequest
   ){
 
     ProductionResult productionResult = productionResultRepository.findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("production result not found by id"));
+            .orElseThrow(() -> new EntityNotFoundException("production result not found by id"));
 
     ProductionResult updatedProductionResult = ProductionResult.builder()
 
-        .id(productionResult.getId()) // 기존 ID 유지
+            .id(productionResult.getId()) // 기존 ID 유지
 
-        .user(updateProductionResultRequest.getUserName() != null
-            ? userRepository.findByName(updateProductionResultRequest.getUserName())
-            .orElseThrow(() -> new EntityNotFoundException("User not found by name"))
-            : productionResult.getUser())
+            .user(updateProductionResultRequest.getUserName() != null
+                    ? userRepository.findByName(updateProductionResultRequest.getUserName())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found by name"))
+                    : productionResult.getUser())
 
-        .documentNo(updateProductionResultRequest.getDocumentNo() != null
-            ? updateProductionResultRequest.getDocumentNo()
-            : productionResult.getDocumentNo())
+            .documentNo(updateProductionResultRequest.getDocumentNo() != null
+                    ? updateProductionResultRequest.getDocumentNo()
+                    : productionResult.getDocumentNo())
 
-        .departWarehouse(updateProductionResultRequest.getFactoryName() != null
-            ? warehouseRepository.findByName(updateProductionResultRequest.getFactoryName())
-            .orElseThrow(() -> new EntityNotFoundException("Factory Warehouse not found by name"))
-            : productionResult.getDepartWarehouse())
+            .departWarehouse(updateProductionResultRequest.getFactoryName() != null
+                    ? warehouseRepository.findByName(updateProductionResultRequest.getFactoryName())
+                    .orElseThrow(() -> new EntityNotFoundException("Factory Warehouse not found by name"))
+                    : productionResult.getDepartWarehouse())
 
-        .workOrder(updateProductionResultRequest.getWorkOrderId() != null
-            ? workOrderRepository.findById(updateProductionResultRequest.getWorkOrderId())
-            .orElseThrow(() -> new EntityNotFoundException("WorkOrder not found by name"))
-            : productionResult.getWorkOrder())
+            .workOrder(updateProductionResultRequest.getWorkOrderId() != null
+                    ? workOrderRepository.findById(updateProductionResultRequest.getWorkOrderId())
+                    .orElseThrow(() -> new EntityNotFoundException("WorkOrder not found by name"))
+                    : productionResult.getWorkOrder())
 
-        .item(updateProductionResultRequest.getItemName() != null
-            ? itemRepository.findByName(updateProductionResultRequest.getItemName())
-            .orElseThrow(() -> new EntityNotFoundException("Item not found by name"))
-            : productionResult.getItem())
+            .item(updateProductionResultRequest.getItemName() != null
+                    ? itemRepository.findByName(updateProductionResultRequest.getItemName())
+                    .orElseThrow(() -> new EntityNotFoundException("Item not found by name"))
+                    : productionResult.getItem())
 
-        .qty(updateProductionResultRequest.getQty() != null
-            ? updateProductionResultRequest.getQty()
-            : productionResult.getQty())
+            .qty(updateProductionResultRequest.getQty() != null
+                    ? updateProductionResultRequest.getQty()
+                    : productionResult.getQty())
 
-       .build();
+            .build();
 
     productionResultRepository.save(updatedProductionResult);
 
@@ -222,7 +222,7 @@ public class ProductionResultServiceImpl implements ProductionResultService {
   @Transactional
   public void softDeleteProductionResult(final Long id){
     ProductionResult productionResult = productionResultRepository.findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("work order id invalid"));
+            .orElseThrow(() -> new EntityNotFoundException("work order id invalid"));
 
     productionResult.setIsDeleted(true);
     //7일 후 삭제
@@ -234,7 +234,7 @@ public class ProductionResultServiceImpl implements ProductionResultService {
   @Transactional
   public void hardDeleteProductionResult(final Long id){
     ProductionResult productionResult = productionResultRepository.findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("work order not found by id"));
+            .orElseThrow(() -> new EntityNotFoundException("work order not found by id"));
     if(!productionResult.isDeleted())
       throw new IllegalArgumentException("work order is not softly deleted");
 
@@ -250,32 +250,32 @@ public class ProductionResultServiceImpl implements ProductionResultService {
 
     return ProductionResultResponse.builder()
 
-        .id(productionResult.getId())
+            .id(productionResult.getId())
 
-        // 일자 no
-        .documentNo(productionResult.getDocumentNo())
+            // 일자 no
+            .documentNo(productionResult.getDocumentNo())
 
-        // 생산 공장
-        .factoryName(productionResult.getDepartWarehouse().getName())
+            // 생산 공장
+            .factoryName(productionResult.getDepartWarehouse().getName())
 
-        //현 창고
-        //.arriveWarehouseName(productionResult.getStockMovement().getWarehouse())
+            //현 창고
+            //.arriveWarehouseName(productionResult.getStockMovement().getWarehouse())
 
-        // 품목명
-        .itemName(productionResult.getItem().getName())
+            // 품목명
+            .itemName(productionResult.getItem().getName())
 
-        //규격
-        .specification(productionResult.getItem().getSpecification())
+            //규격
+            .specification(productionResult.getItem().getSpecification())
 
-        // 수량
-        .qty(productionResult.getQty())
+            // 수량
+            .qty(productionResult.getQty())
 
-        // 작업지시서 no
-        .workOrderId(productionResult.getWorkOrder().getId())
+            // 작업지시서 no
+            .workOrderId(productionResult.getWorkOrder().getId())
 
-        .remark(remark)
+            .remark(remark)
 
-        .build();
+            .build();
   }
 
 

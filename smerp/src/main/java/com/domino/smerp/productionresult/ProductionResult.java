@@ -46,23 +46,23 @@ public class ProductionResult extends BaseEntity {
   //품목
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "item_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
-      nullable = false
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
+          nullable = false
   )
   private Item item;
 
   //사용자
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private User user;
 
   //출발 창고
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "depart_warehouse_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
-      nullable = false
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
+          nullable = false
   )
   private Warehouse departWarehouse;
 
@@ -71,7 +71,7 @@ public class ProductionResult extends BaseEntity {
   //작업지시 - 생산계획 쪽에서 필요한 정보
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "wo_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private WorkOrder workOrder;
 
@@ -100,7 +100,4 @@ public class ProductionResult extends BaseEntity {
       workOrder.setProductionResult(this);
     }
   }
-
-
-
 }

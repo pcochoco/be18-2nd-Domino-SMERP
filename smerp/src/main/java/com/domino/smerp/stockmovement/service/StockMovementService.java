@@ -18,12 +18,12 @@ public interface StockMovementService {
   void createStockMovement(CreateStockMovementRequest createStockMovementRequest);
 
   List<StockMovement> createInboundStockMovement(Item item, BigDecimal movedQty,
-      User user, TransactionType transactionType, String documentNo, BigDecimal totalQty);
+                                                 User user, TransactionType transactionType, String documentNo, BigDecimal totalQty);
 
   List<StockMovement> createProduceStockMovement(WorkOrder workOrder);
 
   //void createOutboundStockMovement(BigDecimal movedQty, Item item, User user,
-      //TransactionType transactionType, String documentNo);
+  //TransactionType transactionType, String documentNo);
 
   StockMovementResponse createAdjustStockMovement(UpdateStockMovementRequest updateStockMovementRequest);
 

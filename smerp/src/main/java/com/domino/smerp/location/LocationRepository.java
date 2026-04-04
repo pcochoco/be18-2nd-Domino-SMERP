@@ -20,5 +20,5 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
     ORDER BY l.curQty ASC
   """)
   List<Location> findAvailableLocationsWithCurQty(@Param("warehouseId") Long warehouseId,
-      @Param("qty") BigDecimal qty);
+                                                  @Param("qty") BigDecimal qty);
 }

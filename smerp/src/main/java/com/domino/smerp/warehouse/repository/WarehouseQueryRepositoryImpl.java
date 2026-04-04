@@ -1,3 +1,4 @@
+
 package com.domino.smerp.warehouse.repository;
 
 import com.domino.smerp.common.util.QuerydslUtils;
@@ -30,18 +31,18 @@ public class WarehouseQueryRepositoryImpl implements WarehouseQueryRepository{
     QWarehouse warehouse = QWarehouse.warehouse;
 
     BooleanExpression condition = warehouseNameContains(keyword.getWarehouseName())
-        .and(divisionTypeEq(keyword.getDivisionType()))
-        .and(activeEq(keyword.isActive()))
-        .and(addressContains(keyword.getAddress()))
-        .and(zipcodeContains(keyword.getZipcode()));
+            .and(divisionTypeEq(keyword.getDivisionType()))
+            .and(activeEq(keyword.isActive()))
+            .and(addressContains(keyword.getAddress()))
+            .and(zipcodeContains(keyword.getZipcode()));
 
     // 정렬 컬럼 매핑
     Map<String, Path<? extends Comparable<?>>> sortMapping = Map.of(
-        "name", warehouse.name,
-        "divisionType", warehouse.divisionType,
-        "active", warehouse.active,
-        "zipcode", warehouse.zipcode,
-        "createdAt", warehouse.createdAt
+            "name", warehouse.name,
+            "divisionType", warehouse.divisionType,
+            "active", warehouse.active,
+            "zipcode", warehouse.zipcode,
+            "createdAt", warehouse.createdAt
     );
 
     List<OrderSpecifier<?>> orders = QuerydslUtils.getSort(pageable.getSort(), sortMapping);
@@ -51,18 +52,18 @@ public class WarehouseQueryRepositoryImpl implements WarehouseQueryRepository{
 
     // 실제 데이터 조회
     List<Warehouse> content = queryFactory
-        .selectFrom(warehouse)
-        .where(condition)
-        .orderBy(orders.toArray(new OrderSpecifier[0]))
-        .offset(pageable.getOffset())
-        .limit(pageable.getPageSize())
-        .fetch();
+            .selectFrom(warehouse)
+            .where(condition)
+            .orderBy(orders.toArray(new OrderSpecifier[0]))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
     // 카운트 쿼리
     JPAQuery<Long> countQuery = queryFactory
-        .select(warehouse.count())
-        .from(warehouse)
-        .where(condition);
+            .select(warehouse.count())
+            .from(warehouse)
+            .where(condition);
 
     return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
   }

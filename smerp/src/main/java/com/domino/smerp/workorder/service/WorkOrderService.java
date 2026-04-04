@@ -16,10 +16,10 @@ public interface WorkOrderService {
   WorkOrderListResponse getAllWorkOrders();
 
   PageResponse<SearchWorkOrderListResponse> searchWorkOrders(
-      final SearchWorkOrderRequest keyword,
-      final Pageable pageable);
+          final SearchWorkOrderRequest keyword,
+          final Pageable pageable);
 
-    //상세 조회
+  //상세 조회
   WorkOrderResponse getWorkOrderById(final Long id);
 
   CurrentWorkOrderListResponse getAllCurrentWorkOrders();

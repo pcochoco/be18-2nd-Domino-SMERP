@@ -45,8 +45,8 @@ public class WorkOrderController {
   //검색
   @GetMapping("/search")
   public ResponseEntity<PageResponse<SearchWorkOrderListResponse>> getLotNumbers(
-      final @ModelAttribute SearchWorkOrderRequest keyword,
-      final Pageable pageable) {
+          final @ModelAttribute SearchWorkOrderRequest keyword,
+          final Pageable pageable) {
     return ResponseEntity.ok(workOrderService.searchWorkOrders(keyword, pageable));
   }
 
@@ -60,7 +60,7 @@ public class WorkOrderController {
   //상세 조회
   @GetMapping("/{work-order}")
   public ResponseEntity<WorkOrderResponse> getProductionOrderById(
-      @PathVariable(name = "work-order") Long workOrderId) {
+          @PathVariable(name = "work-order") Long workOrderId) {
     WorkOrderResponse workOrderResponse = workOrderService.getWorkOrderById(workOrderId);
     return ResponseEntity.status(200).body(workOrderResponse);
   }
@@ -70,7 +70,7 @@ public class WorkOrderController {
   //사용자 생성 요청
   @PostMapping
   public ResponseEntity<WorkOrderResponse> createWorkOrder(
-      @Valid @RequestBody CreateWorkOrderRequest createWorkOrderRequest) {
+          @Valid @RequestBody CreateWorkOrderRequest createWorkOrderRequest) {
     WorkOrderResponse workOrderResponse = workOrderService.createWorkOrder(createWorkOrderRequest);
     return ResponseEntity.status(201).body(workOrderResponse);
   }
@@ -79,17 +79,17 @@ public class WorkOrderController {
   //수정
   @PatchMapping("/{work-order}")
   public ResponseEntity<WorkOrderResponse> updateProductionOrder(
-      @PathVariable(name = "work-order") Long workOrderId,
-      @Valid @RequestBody UpdateWorkOrderRequest updateWorkOrderRequest) {
+          @PathVariable(name = "work-order") Long workOrderId,
+          @Valid @RequestBody UpdateWorkOrderRequest updateWorkOrderRequest) {
     WorkOrderResponse workOrderResponse = workOrderService.updateWorkOrder(
-        workOrderId, updateWorkOrderRequest);
+            workOrderId, updateWorkOrderRequest);
     return ResponseEntity.status(200).body(workOrderResponse);
   }
 
   //삭제 - soft delete
   @DeleteMapping("/{work-order}")
   public ResponseEntity deleteProductionOrder(
-      @PathVariable(name = "work-order") Long workOrderId) {
+          @PathVariable(name = "work-order") Long workOrderId) {
     workOrderService.softDelete(workOrderId);
     return ResponseEntity.status(204).build();
   }
