@@ -1,6 +1,8 @@
 package com.domino.smerp.productionresult;
 
 import com.domino.smerp.common.BaseEntity;
+import com.domino.smerp.common.exception.CustomException;
+import com.domino.smerp.common.exception.ErrorCode;
 import com.domino.smerp.item.Item;
 import com.domino.smerp.productionresult.dto.request.CreateProductionResultRequest;
 import com.domino.smerp.productionresult.dto.request.UpdateProductionResultRequest;
@@ -99,5 +101,11 @@ public class ProductionResult extends BaseEntity {
     if (workOrder != null && workOrder.getProductionResult() != this) {
       workOrder.setProductionResult(this);
     }
+  }
+
+  public void setQty(BigDecimal qty){
+    if(qty.equals(BigDecimal.ZERO))
+      throw new CustomException(ErrorCode.QTY_UNDER_ZERO);
+    this.qty = qty;
   }
 }

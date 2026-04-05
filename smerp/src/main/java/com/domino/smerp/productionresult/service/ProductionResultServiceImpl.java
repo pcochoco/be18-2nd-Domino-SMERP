@@ -9,6 +9,7 @@ import com.domino.smerp.productionresult.dto.request.CreateProductionResultReque
 import com.domino.smerp.productionresult.dto.request.UpdateProductionResultRequest;
 import com.domino.smerp.productionresult.dto.response.ProductionResultListResponse;
 import com.domino.smerp.productionresult.dto.response.ProductionResultResponse;
+import com.domino.smerp.stockmovement.service.StockMovementService;
 import com.domino.smerp.user.User;
 import com.domino.smerp.user.UserRepository;
 import com.domino.smerp.warehouse.Warehouse;
@@ -33,7 +34,7 @@ public class ProductionResultServiceImpl implements ProductionResultService {
   private final ItemRepository itemRepository;
   private final UserRepository userRepository;
   private final DocumentNoGenerator documentNoGenerator;
-  //private final StockMovementService stockMovementService;
+  private final StockMovementService stockMovementService;
 
   @Override
   @Transactional(readOnly = true)
@@ -123,7 +124,7 @@ public class ProductionResultServiceImpl implements ProductionResultService {
     productionResultRepository.save(productionResult);
 
     //production result의 work order을 바탕으로 재고 수불 반영
-    //stockMovementService.createProduceStockMovement(workOrder);
+    stockMovementService.createProduceStockMovement(workOrder);
 
     workOrder.setProducedAt(createProductionResultRequest.getProducedAt());
     workOrder.setProductionResult(productionResult);
@@ -170,52 +171,29 @@ public class ProductionResultServiceImpl implements ProductionResultService {
     ProductionResult productionResult = productionResultRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("production result not found by id"));
 
-    ProductionResult updatedProductionResult = ProductionResult.builder()
+    if (productionResult.isDeleted()) {
+      throw new IllegalArgumentException("production result is deleted");
+    }
 
-            .id(productionResult.getId()) // 기존 ID 유지
+    if (updateProductionResultRequest.getQty() != null) {
+      if (updateProductionResultRequest.getQty().compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException("qty must be greater than zero");
+      }
+      productionResult.setQty(updateProductionResultRequest.getQty());
+    }
 
-            .user(updateProductionResultRequest.getUserName() != null
-                    ? userRepository.findByName(updateProductionResultRequest.getUserName())
-                    .orElseThrow(() -> new EntityNotFoundException("User not found by name"))
-                    : productionResult.getUser())
+    if (updateProductionResultRequest.getProducedAt() != null) {
+      productionResult.getWorkOrder().setProducedAt(updateProductionResultRequest.getProducedAt());
+    }
 
-            .documentNo(updateProductionResultRequest.getDocumentNo() != null
-                    ? updateProductionResultRequest.getDocumentNo()
-                    : productionResult.getDocumentNo())
-
-            .departWarehouse(updateProductionResultRequest.getFactoryName() != null
-                    ? warehouseRepository.findByName(updateProductionResultRequest.getFactoryName())
-                    .orElseThrow(() -> new EntityNotFoundException("Factory Warehouse not found by name"))
-                    : productionResult.getDepartWarehouse())
-
-            .workOrder(updateProductionResultRequest.getWorkOrderId() != null
-                    ? workOrderRepository.findById(updateProductionResultRequest.getWorkOrderId())
-                    .orElseThrow(() -> new EntityNotFoundException("WorkOrder not found by name"))
-                    : productionResult.getWorkOrder())
-
-            .item(updateProductionResultRequest.getItemName() != null
-                    ? itemRepository.findByName(updateProductionResultRequest.getItemName())
-                    .orElseThrow(() -> new EntityNotFoundException("Item not found by name"))
-                    : productionResult.getItem())
-
-            .qty(updateProductionResultRequest.getQty() != null
-                    ? updateProductionResultRequest.getQty()
-                    : productionResult.getQty())
-
-            .build();
-
-    productionResultRepository.save(updatedProductionResult);
-
-    WorkOrder workOrder = updatedProductionResult.getWorkOrder();
-    workOrder.setProducedAt(updateProductionResultRequest.getProducedAt());
-    workOrder.setProductionResult(updatedProductionResult);
+    //TODO: 수정 시 재고, 수불 맞춰져야함
 
     //수정시에도 재고 수불 -> 재고 가능
-
-    return toProductionResultResponse(updatedProductionResult);
+    return toProductionResultResponse(productionResult);
   }
 
 
+  //TODO : 삭제 시 재고, 수불 맞춰져야함
 
   //soft delete
   @Override
