@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -302,17 +303,27 @@ public class WorkOrderServiceImpl implements WorkOrderService {
       throw new CustomException(ErrorCode.WORKORDER_COMPLETE_NOT_AVAILABLE);
     }
 
+    //작업지시에 대한 중복된 생산실적 생성 x
+    if (workOrder.getProductionResult() != null) {
+      throw new CustomException(ErrorCode.PRODUCTION_RESULT_DUPLICATE_FOR_WORK_ORDER);
+    }
+
+    workOrder.getProductionPlan().complete();
+
     //생산실적 생성
     //생산실적 안으로 재고, 수불을 넣게 되면 생산실적이 알아야하는 내용이 커짐 (생산실적만 생성하는 것이 아님을 숨기게 됨)
-    ProductionResult productionResult = productionResultService.createProductionResultByWorkOrder(workOrder, producedQty);
+    try {
+      ProductionResult productionResult =
+              productionResultService.createProductionResultByWorkOrder(workOrder, producedQty);
+      workOrder.complete(productionResult);
+
+    } catch (DataIntegrityViolationException e) { //Unique 제약조건에 대한 예외 처리
+      throw new CustomException(ErrorCode.PRODUCTION_RESULT_DUPLICATE_FOR_WORK_ORDER);
+    }
 
     //재고 생성
 
     //재고 수불 생성
-
-    workOrder.getProductionPlan().complete();
-
-    workOrder.complete(productionResult);
 
   }
 

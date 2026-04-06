@@ -9,19 +9,8 @@ import com.domino.smerp.productionresult.dto.request.UpdateProductionResultReque
 import com.domino.smerp.user.User;
 import com.domino.smerp.warehouse.Warehouse;
 import com.domino.smerp.workorder.WorkOrder;
-import jakarta.persistence.Column;
-import jakarta.persistence.ConstraintMode;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -37,7 +26,11 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "production_result")
+@Table(name = "production_result",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_production_result_work_order", columnNames = "work_order_id")
+        }
+)
 @ToString(onlyExplicitlyIncluded = true)
 public class ProductionResult extends BaseEntity {
   @Id
