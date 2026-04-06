@@ -123,11 +123,21 @@ public enum ErrorCode {
     // 전표 생성 예외 정보
     DOCUMENT_NO_GENERATION_FAILED(HttpStatus.CONFLICT, "DOCUMENT_NO_GENERATION_FAILED", "전표번호 생성에 실패했습니다."),
 
-    //WAREHOUSE
+    //Warehouse
     WAREHOUSE_NOT_FOUND(HttpStatus.NOT_FOUND, "WAREHOUSE_NOT_FOUND", "없는 창고입니다."),
     WAREHOUSE_DUPLICATE_NAME(HttpStatus.CONFLICT, "WAREHOUSE_DUPLICATE_NAME", "창고 이름 중복됩니다."),
     NO_WAREHOUSE_EMPTY(HttpStatus.BAD_REQUEST, "NO_WAREHOUSE_EMPTY", "재고를 넣을 창고 공간이 없습니다."),
-    LOCATION_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "LOCATION_NOT_ENOUGH", "재고를 넣을 창고 공간이 부족합니다.");
+    LOCATION_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "LOCATION_NOT_ENOUGH", "재고를 넣을 창고 공간이 부족합니다."),
+
+    //ProductionResult
+    PRODUCTION_RESULT_DUPLICATE_FOR_WORK_ORDER(HttpStatus.CONFLICT, "PRODUCTION_RESULT_ALREADY_EXISTS", "작업지시에 대한 생산실적이 이미 존재합니다."),
+
+    //WorkOrder
+    WORKORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "WORKORDER_NOT_FOUND", "없는 작업지시입니다."),
+    WORKORDER_EDIT_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "WORKORDER_EDIT_NOT_ALLOWED", "승인되거나 완료된 작업지시는 수정이 불가합니다."),
+    WORKORDER_NOT_APPROVABLE(HttpStatus.BAD_REQUEST, "WORKORDER_NOT_APPROVABLE", "승인되거나 완료된 작업지시는 승인할 수 없습니다."),
+    WORKORDER_RETURN_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "WORKORDER_RETURN_NOT_AVAILABLE", "작업지시가 대기 상태가 아닌 경우 반려할 수 없습니다."),
+    WORKORDER_COMPLETE_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "WORKORDER_COMPLETE_NOT_AVAILABLE", "작업지시가 승인되지 않은 경우 완료할 수 없습니다.");
 
 
     private final HttpStatus status;

@@ -2,6 +2,8 @@ package com.domino.smerp.workorder.service;
 
 import com.domino.smerp.client.Client;
 import com.domino.smerp.common.dto.PageResponse;
+import com.domino.smerp.common.exception.CustomException;
+import com.domino.smerp.common.exception.ErrorCode;
 import com.domino.smerp.common.util.DocumentNoGenerator;
 import com.domino.smerp.item.Item;
 import com.domino.smerp.item.repository.ItemRepository;
@@ -118,14 +120,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   @Override
   @Transactional
   public WorkOrderResponse createWorkOrder(final CreateWorkOrderRequest createWorkOrderRequest) {
-    /*
-    System.out.println(createWorkOrderRequest.getItemName());
-    System.out.println(createWorkOrderRequest.getFactoryName());
-    System.out.println(createWorkOrderRequest.getUserName());
-    System.out.println(createWorkOrderRequest.getProductionPlanId());
-    System.out.println(createWorkOrderRequest.getPlanQty());
-    System.out.println(createWorkOrderRequest.getPlanAt());
-    */
+
     Item item = itemRepository.findByName(createWorkOrderRequest.getItemName())
             .orElseThrow(() -> new EntityNotFoundException("item not found by name"));
 
@@ -155,7 +150,6 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     workOrderRepository.save(workOrder);
 
-    //
     //work order 생성 시 생산계획 담당자, 적요 넣어야함
     //생산계획이 없음
     productionPlan.setUser(user);
@@ -230,21 +224,15 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   public WorkOrderResponse updateWorkOrder(final Long id,
                                            final UpdateWorkOrderRequest updateWorkOrderRequest) {
 
-
     //id 유효
     WorkOrder workOrder = workOrderRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("No work order of id: " + id));
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
 
-    if(workOrder.getStatus().equals(Status.COMPLETED)) {
-      throw new EntityNotFoundException("work order 작업 완료, 수정 불가합니다");
+    if (workOrder.getStatus() == Status.COMPLETED || workOrder.getStatus() == Status.APPROVED) {
+      throw new CustomException(ErrorCode.WORKORDER_EDIT_NOT_ALLOWED);
     }
 
-    //유효성 체크 필요 x
-
-    Item item = (updateWorkOrderRequest.getItemName() != null)
-            ? itemRepository.findByName(updateWorkOrderRequest.getItemName())
-            .orElseThrow(() -> new EntityNotFoundException("item not found by name"))
-            : workOrder.getItem();
+    //사용자 요청에 의한 변경 대상의 유효성 확인 - item 수정 x
 
     Warehouse warehouse = (updateWorkOrderRequest.getFactoryName() != null)
             ? warehouseRepository.findByName(updateWorkOrderRequest.getFactoryName())
@@ -263,56 +251,86 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             .orElseThrow(() -> new EntityNotFoundException("user not found by name"))
             : productionPlan.getUser();
 
+      workOrder.update(
+              warehouse,
+              productionPlan,
+              updateWorkOrderRequest.getPlanQty() != null
+                      ? updateWorkOrderRequest.getPlanQty()
+                      : workOrder.getQty(),
+              updateWorkOrderRequest.getStatus() != null
+                      ? updateWorkOrderRequest.getStatus()
+                      : workOrder.getStatus(),
+              updateWorkOrderRequest.getPlanAt() != null
+                      ? updateWorkOrderRequest.getPlanAt()
+                      : workOrder.getPlanAt()
+      );
 
-    WorkOrder updatedWorkOrder = WorkOrder.builder()
-            .id(workOrder.getId())
-            .item(item)
-            .warehouse(warehouse)
-            .productionPlan(productionPlan)
-            .qty(
-                    updateWorkOrderRequest.getPlanQty() != null ?
-                            updateWorkOrderRequest.getPlanQty() : workOrder.getQty()
-            )
-            .documentNo(workOrder.getDocumentNo())
-            .status(
-                    updateWorkOrderRequest.getStatus() != null ?
-                            updateWorkOrderRequest.getStatus() : workOrder.getStatus()
-            )
+    //plan 수정 적용
+    productionPlan.updateForWorkOrder(user, updateWorkOrderRequest.getRemark() != null ?
+          updateWorkOrderRequest.getRemark() : productionPlan.getRemark());
 
-            .planAt(
-                    updateWorkOrderRequest.getPlanAt() != null ?
-                            updateWorkOrderRequest.getPlanAt() : workOrder.getPlanAt()
-            )
-
-            .producedAt(updateWorkOrderRequest.getProducedAt() != null ?
-                    updateWorkOrderRequest.getProducedAt() : workOrder.getProducedAt()
-            )
-
-            .isDeleted(false)
-            .build();
-
-    //plan에 수정 반영될 부분
-    productionPlan.setUser(user);
-    productionPlan.setRemark(updateWorkOrderRequest.getRemark() != null ?
-            updateWorkOrderRequest.getRemark() : productionPlan.getRemark());
+    return toWorkOrderResponse(workOrder);
+  }
 
 
-    if(updatedWorkOrder.getStatus() == Status.APPROVED) {
+  //작업지시 승인 - 생산실적을 생성하는 경우(수정 api와 분리) / 생산 시작
+  @Override
+  @Transactional
+  public WorkOrderResponse approveWorkOrder(final Long id) {
 
-      ProductionResult productionResult = productionResultService.createProductionResultByWorkOrder(updatedWorkOrder, updateWorkOrderRequest.getProducedQty());
-      updatedWorkOrder.setProductionResult(productionResult);
-      //stock movement 저장은 produce stock에서
-      stockMovementService.createProduceStockMovement(updatedWorkOrder);
+    //id 유효
+    WorkOrder workOrder = workOrderRepository.findById(id)
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
 
-      productionPlan.setStatus(com.domino.smerp.productionplan.constants.Status.COMPLETED);
-      updatedWorkOrder.setStatus(Status.COMPLETED);
+    //status 확인
+    if(workOrder.getStatus() == Status.APPROVED || workOrder.getStatus() == Status.COMPLETED)
+      throw new CustomException(ErrorCode.WORKORDER_NOT_APPROVABLE);
 
+    //approved 부터 작업지시 수정 x
 
+    return toWorkOrderResponse(workOrder);
+  }
+
+  //complete - 실제 생산 종료
+  @Override
+  @Transactional
+  public void completeWorkOrder(final Long id, final BigDecimal producedQty){
+    WorkOrder workOrder = workOrderRepository.findById(id)
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
+
+    if(workOrder.getStatus() != Status.APPROVED) {
+      throw new CustomException(ErrorCode.WORKORDER_COMPLETE_NOT_AVAILABLE);
     }
 
-    workOrderRepository.save(updatedWorkOrder);
+    //생산실적 생성
+    //생산실적 안으로 재고, 수불을 넣게 되면 생산실적이 알아야하는 내용이 커짐 (생산실적만 생성하는 것이 아님을 숨기게 됨)
+    ProductionResult productionResult = productionResultService.createProductionResultByWorkOrder(workOrder, producedQty);
 
-    return toWorkOrderResponse(updatedWorkOrder);
+    //재고 생성
+
+    //재고 수불 생성
+
+    workOrder.getProductionPlan().complete();
+
+    workOrder.complete(productionResult);
+
+  }
+
+  //return
+  @Override
+  @Transactional
+  public void returnWorkOrder(final Long id) {
+
+    WorkOrder workOrder = workOrderRepository.findById(id)
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
+
+    if(workOrder.getStatus() != Status.PENDING) {
+      throw new CustomException(ErrorCode.WORKORDER_RETURN_NOT_AVAILABLE);
+    }
+
+    else {
+      workOrder.setStatus(Status.RETURNED);
+    }
   }
 
 
@@ -322,8 +340,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   public WorkOrderResponse softDelete(final Long id) {
     //id 유효, 이미 soft delete x
     //7일 후 삭제
-    WorkOrder workOrder = workOrderRepository.findById(id)
-            .orElseThrow(() -> new  EntityNotFoundException("No work order of id: "));
+    WorkOrder workOrder = workOrderRepository.findByIdAndIsDeletedFalse(id)
+            .orElseThrow(() -> new EntityNotFoundException("No work order of id"));
 
     workOrder.setIsDeleted(true);
 
@@ -335,7 +353,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   public void hardDeleteWorkOrder(final Long id){
 
     WorkOrder workOrder = workOrderRepository.findById(id)
-            .orElseThrow(() -> new  EntityNotFoundException("No work order of id: "));
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
 
     if(!workOrder.isDeleted())
       throw new IllegalArgumentException("work order is not softly deleted");

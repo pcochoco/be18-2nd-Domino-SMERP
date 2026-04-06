@@ -114,4 +114,23 @@ public class WorkOrder extends BaseEntity {
     }
   }
 
+  public void update(
+          Warehouse warehouse,
+          ProductionPlan productionPlan,
+          BigDecimal qty,
+          Status status,
+          Instant planAt
+  ) {
+    this.warehouse = warehouse;
+    this.productionPlan = productionPlan;
+    this.qty = qty;
+    this.status = status;
+    this.planAt = planAt;
+  }
+
+  public void complete(ProductionResult productionResult) {
+    this.productionResult = productionResult;
+    this.status = Status.COMPLETED;
+  }
+
 }

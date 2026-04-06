@@ -92,4 +92,13 @@ public class ProductionPlan extends BaseEntity {
   }
 
   public void setQty(BigDecimal qty){ this.qty = qty; }
+
+  public void updateForWorkOrder(User user, String remark) {
+    this.user = user;
+    this.remark = remark;
+  }
+
+  public void complete(){
+    this.status = Status.COMPLETED;
+  }
 }
