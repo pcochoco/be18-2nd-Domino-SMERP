@@ -1,6 +1,7 @@
 package com.domino.smerp.workorder.service;
 
 import com.domino.smerp.common.dto.PageResponse;
+import com.domino.smerp.workorder.dto.request.CompleteWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.CreateWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.SearchWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.UpdateWorkOrderRequest;
@@ -38,7 +39,7 @@ public interface WorkOrderService {
   WorkOrderResponse approveWorkOrder(final Long id);
 
   //완료
-  void completeWorkOrder(final Long id, final BigDecimal producedQty);
+  void completeWorkOrder(final Long id, final CompleteWorkOrderRequest completeWorkOrderRequest);
 
   //반려
   void returnWorkOrder(final Long id);

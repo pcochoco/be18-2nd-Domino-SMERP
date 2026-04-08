@@ -3,6 +3,7 @@ package com.domino.smerp.workorder;
 import com.domino.smerp.common.dto.PageResponse;
 import com.domino.smerp.productionplan.dto.request.SearchProductionPlanRequest;
 import com.domino.smerp.productionplan.service.ProductionPlanService;
+import com.domino.smerp.workorder.dto.request.CompleteWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.CreateWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.SearchWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.UpdateWorkOrderRequest;
@@ -26,6 +27,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.math.BigDecimal;
 
 @RestController
 @RequiredArgsConstructor
@@ -77,7 +80,7 @@ public class WorkOrderController {
 
 
   //수정
-  @PatchMapping("/{work-order}")
+  @PatchMapping("/{work-order}/edit")
   public ResponseEntity<WorkOrderResponse> updateProductionOrder(
           @PathVariable(name = "work-order") Long workOrderId,
           @Valid @RequestBody UpdateWorkOrderRequest updateWorkOrderRequest) {
@@ -86,9 +89,39 @@ public class WorkOrderController {
     return ResponseEntity.status(200).body(workOrderResponse);
   }
 
+  //승인
+  @PatchMapping("/{work-order}/approve")
+  public ResponseEntity<WorkOrderResponse> approveWorkOrder(
+          @PathVariable(name = "work-order") Long workOrderId
+  ){
+
+    WorkOrderResponse workOrderResponse = workOrderService.approveWorkOrder(workOrderId);
+
+    return ResponseEntity.status(200).body(workOrderResponse);
+  }
+
+  //완료 (생산 종료)
+  @PatchMapping("/{work-order}/complete")
+  public ResponseEntity<Void> completeWorkOrder(
+          @PathVariable(name = "work-order") Long workOrderId,
+          @Valid @RequestBody CompleteWorkOrderRequest completeWorkOrderRequest
+          ){
+    workOrderService.completeWorkOrder(workOrderId, completeWorkOrderRequest);
+    return ResponseEntity.status(204).build();
+  }
+
+  //return
+  @PatchMapping("/{work-order}/return")
+  public ResponseEntity<Void> completeWorkOrder(
+          @PathVariable(name = "work-order") Long workOrderId
+  ){
+    workOrderService.returnWorkOrder(workOrderId);
+    return ResponseEntity.status(204).build();
+  }
+
   //삭제 - soft delete
   @DeleteMapping("/{work-order}")
-  public ResponseEntity deleteProductionOrder(
+  public ResponseEntity<Void> deleteProductionOrder(
           @PathVariable(name = "work-order") Long workOrderId) {
     workOrderService.softDelete(workOrderId);
     return ResponseEntity.status(204).build();

@@ -20,6 +20,7 @@ import com.domino.smerp.user.UserRepository;
 import com.domino.smerp.warehouse.Warehouse;
 import com.domino.smerp.warehouse.repository.WarehouseRepository;
 import com.domino.smerp.workorder.WorkOrder;
+import com.domino.smerp.workorder.dto.request.CompleteWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.SearchWorkOrderRequest;
 import com.domino.smerp.workorder.dto.response.SearchWorkOrderListResponse;
 import com.domino.smerp.workorder.repository.WorkOrderRepository;
@@ -295,7 +296,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   //complete - 실제 생산 종료
   @Override
   @Transactional
-  public void completeWorkOrder(final Long id, final BigDecimal producedQty){
+  public void completeWorkOrder(final Long id, final CompleteWorkOrderRequest completeWorkOrderRequest){
     WorkOrder workOrder = workOrderRepository.findById(id)
             .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
 
@@ -311,10 +312,10 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     workOrder.getProductionPlan().complete();
 
     //생산실적 생성
-    //생산실적 안으로 재고, 수불을 넣게 되면 생산실적이 알아야하는 내용이 커짐 (생산실적만 생성하는 것이 아님을 숨기게 됨)
+    //TODO : 생산실적 안으로 재고, 수불을 넣게 되면 생산실적이 알아야하는 내용이 커짐 (생산실적만 생성하는 것이 아님을 숨기게 됨)
     try {
       ProductionResult productionResult =
-              productionResultService.createProductionResultByWorkOrder(workOrder, producedQty);
+              productionResultService.createProductionResultByWorkOrder(workOrder, completeWorkOrderRequest.getProducedQty());
       workOrder.complete(productionResult);
 
     } catch (DataIntegrityViolationException e) { //Unique 제약조건에 대한 예외 처리
@@ -335,6 +336,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     WorkOrder workOrder = workOrderRepository.findById(id)
             .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
 
+    //승인, 완료 시는 작업지시를 취소 불가
     if(workOrder.getStatus() != Status.PENDING) {
       throw new CustomException(ErrorCode.WORKORDER_RETURN_NOT_AVAILABLE);
     }
