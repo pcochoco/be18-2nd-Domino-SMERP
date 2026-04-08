@@ -44,9 +44,9 @@ public class WorkOrderQueryRepositoryImpl implements WorkOrderQueryRepository {
 
     // 정렬 컬럼 매핑
     Map<String, Path<? extends Comparable<?>>> sortMapping = Map.of(
-        "itemName", workOrder.item.name,
-        "status", workOrder.status,
-        "productionPlanId", workOrder.productionPlan.id
+            "itemName", workOrder.item.name,
+            "status", workOrder.status,
+            "productionPlanId", workOrder.productionPlan.id
     );
 
     List<OrderSpecifier<?>> orders = QuerydslUtils.getSort(pageable.getSort(), sortMapping);
@@ -56,20 +56,20 @@ public class WorkOrderQueryRepositoryImpl implements WorkOrderQueryRepository {
 
     // 실제 데이터 조회
     List<WorkOrder> content = queryFactory
-        .selectFrom(workOrder)
-        .leftJoin(workOrder.item).fetchJoin()
-        .leftJoin(workOrder.productionPlan).fetchJoin()
-        .where(builder)
-        .orderBy(orders.toArray(new OrderSpecifier[0]))
-        .offset(pageable.getOffset())
-        .limit(pageable.getPageSize())
-        .fetch();
+            .selectFrom(workOrder)
+            .leftJoin(workOrder.item).fetchJoin()
+            .leftJoin(workOrder.productionPlan).fetchJoin()
+            .where(builder)
+            .orderBy(orders.toArray(new OrderSpecifier[0]))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
     // 카운트 쿼리
     JPAQuery<Long> countQuery = queryFactory
-        .select(workOrder.count())
-        .from(workOrder)
-        .where(builder);
+            .select(workOrder.count())
+            .from(workOrder)
+            .where(builder);
 
     return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
   }

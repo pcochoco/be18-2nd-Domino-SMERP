@@ -2,6 +2,8 @@ package com.domino.smerp.workorder.service;
 
 import com.domino.smerp.client.Client;
 import com.domino.smerp.common.dto.PageResponse;
+import com.domino.smerp.common.exception.CustomException;
+import com.domino.smerp.common.exception.ErrorCode;
 import com.domino.smerp.common.util.DocumentNoGenerator;
 import com.domino.smerp.item.Item;
 import com.domino.smerp.item.repository.ItemRepository;
@@ -18,6 +20,7 @@ import com.domino.smerp.user.UserRepository;
 import com.domino.smerp.warehouse.Warehouse;
 import com.domino.smerp.warehouse.repository.WarehouseRepository;
 import com.domino.smerp.workorder.WorkOrder;
+import com.domino.smerp.workorder.dto.request.CompleteWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.SearchWorkOrderRequest;
 import com.domino.smerp.workorder.dto.response.SearchWorkOrderListResponse;
 import com.domino.smerp.workorder.repository.WorkOrderRepository;
@@ -36,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,8 +78,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     }
 
     return WorkOrderListResponse.builder()
-        .workOrderResponses(workOrderResponses)
-        .build();
+            .workOrderResponses(workOrderResponses)
+            .build();
 
   }
 
@@ -92,7 +96,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     //id 유효한데 soft delete 상태 x
     WorkOrder workOrder = workOrderRepository.findByIdAndIsDeletedFalse(id)
-        .orElseThrow(() -> new EntityNotFoundException("No work order of id"));
+            .orElseThrow(() -> new EntityNotFoundException("No work order of id"));
 
     return toWorkOrderResponse(workOrder);
   }
@@ -110,52 +114,44 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     }
 
     return CurrentWorkOrderListResponse.builder()
-        .currentWorkOrderResponses(currentWorkOrderResponses)
-        .build();
+            .currentWorkOrderResponses(currentWorkOrderResponses)
+            .build();
   }
 
   //요청에 의한 생성
   @Override
   @Transactional
   public WorkOrderResponse createWorkOrder(final CreateWorkOrderRequest createWorkOrderRequest) {
-    /*
-    System.out.println(createWorkOrderRequest.getItemName());
-    System.out.println(createWorkOrderRequest.getFactoryName());
-    System.out.println(createWorkOrderRequest.getUserName());
-    System.out.println(createWorkOrderRequest.getProductionPlanId());
-    System.out.println(createWorkOrderRequest.getPlanQty());
-    System.out.println(createWorkOrderRequest.getPlanAt());
-    */
+
     Item item = itemRepository.findByName(createWorkOrderRequest.getItemName())
-        .orElseThrow(() -> new EntityNotFoundException("item not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("item not found by name"));
 
     Warehouse warehouse = warehouseRepository.findByName(createWorkOrderRequest.getFactoryName())
-        .orElseThrow(() -> new EntityNotFoundException("warehouse not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("warehouse not found by name"));
 
     ProductionPlan productionPlan = productionPlanRepository.findById(createWorkOrderRequest.getProductionPlanId())
-        .orElseThrow(() -> new EntityNotFoundException("production plan not found by id"));
+            .orElseThrow(() -> new EntityNotFoundException("production plan not found by id"));
 
     User user = userRepository.findByName(createWorkOrderRequest.getUserName())
-        .orElseThrow(() -> new EntityNotFoundException("user not found by name"));
+            .orElseThrow(() -> new EntityNotFoundException("user not found by name"));
 
     String documentNo = generateDocumentNoWithRetry(LocalDate.now());
 
 
     //유일함 x
     WorkOrder workOrder = WorkOrder.builder()
-        .item(item)
-        .qty(createWorkOrderRequest.getPlanQty())
-        .productionPlan(productionPlan)
-        .warehouse(warehouse)
-        .status(Status.PENDING)
-        .planAt(createWorkOrderRequest.getPlanAt())
-        .documentNo(documentNo)
-        .isDeleted(false)
-        .build();
+            .item(item)
+            .qty(createWorkOrderRequest.getPlanQty())
+            .productionPlan(productionPlan)
+            .warehouse(warehouse)
+            .status(Status.PENDING)
+            .planAt(createWorkOrderRequest.getPlanAt())
+            .documentNo(documentNo)
+            .isDeleted(false)
+            .build();
 
     workOrderRepository.save(workOrder);
 
-    //
     //work order 생성 시 생산계획 담당자, 적요 넣어야함
     //생산계획이 없음
     productionPlan.setUser(user);
@@ -215,104 +211,139 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   @Override
   @Transactional(readOnly = true)
   public PageResponse<SearchWorkOrderListResponse> searchWorkOrders(
-      final SearchWorkOrderRequest keyword,
-      final Pageable pageable)
+          final SearchWorkOrderRequest keyword,
+          final Pageable pageable)
   {
     return PageResponse.from(
-        workOrderRepository
-            .searchWorkOrders(keyword, pageable)
-            .map(SearchWorkOrderListResponse::fromEntity));
+            workOrderRepository
+                    .searchWorkOrders(keyword, pageable)
+                    .map(SearchWorkOrderListResponse::fromEntity));
   }
 
   //수정 요청
   @Override
   @Transactional
   public WorkOrderResponse updateWorkOrder(final Long id,
-      final UpdateWorkOrderRequest updateWorkOrderRequest) {
-
+                                           final UpdateWorkOrderRequest updateWorkOrderRequest) {
 
     //id 유효
     WorkOrder workOrder = workOrderRepository.findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("No work order of id: " + id));
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
 
-    if(workOrder.getStatus().equals(Status.COMPLETED)) {
-      throw new EntityNotFoundException("work order 작업 완료, 수정 불가합니다");
+    if (workOrder.getStatus() == Status.COMPLETED || workOrder.getStatus() == Status.APPROVED) {
+      throw new CustomException(ErrorCode.WORKORDER_EDIT_NOT_ALLOWED);
     }
 
-    //유효성 체크 필요 x
-
-    Item item = (updateWorkOrderRequest.getItemName() != null)
-        ? itemRepository.findByName(updateWorkOrderRequest.getItemName())
-        .orElseThrow(() -> new EntityNotFoundException("item not found by name"))
-        : workOrder.getItem();
+    //사용자 요청에 의한 변경 대상의 유효성 확인 - item 수정 x
 
     Warehouse warehouse = (updateWorkOrderRequest.getFactoryName() != null)
-        ? warehouseRepository.findByName(updateWorkOrderRequest.getFactoryName())
-        .orElseThrow(() -> new EntityNotFoundException("warehouse not found by name"))
-        : workOrder.getWarehouse();
+            ? warehouseRepository.findByName(updateWorkOrderRequest.getFactoryName())
+            .orElseThrow(() -> new EntityNotFoundException("warehouse not found by name"))
+            : workOrder.getWarehouse();
 
     //production plan : update request의 plan 변경 시 반영 용도
     ProductionPlan productionPlan = (updateWorkOrderRequest.getProductionPlanId() != null)
-        ? productionPlanRepository.findById(updateWorkOrderRequest.getProductionPlanId())
-        .orElseThrow(() -> new EntityNotFoundException("production plan not found by id"))
-        : workOrder.getProductionPlan();
+            ? productionPlanRepository.findById(updateWorkOrderRequest.getProductionPlanId())
+            .orElseThrow(() -> new EntityNotFoundException("production plan not found by id"))
+            : workOrder.getProductionPlan();
 
     //user : update request의 username을 plan에 반영하는 용도
     User user = (updateWorkOrderRequest.getUserName() != null)
-        ? userRepository.findByName(updateWorkOrderRequest.getUserName())
-        .orElseThrow(() -> new EntityNotFoundException("user not found by name"))
-        : productionPlan.getUser();
+            ? userRepository.findByName(updateWorkOrderRequest.getUserName())
+            .orElseThrow(() -> new EntityNotFoundException("user not found by name"))
+            : productionPlan.getUser();
+
+      workOrder.update(
+              warehouse,
+              productionPlan,
+              updateWorkOrderRequest.getPlanQty() != null
+                      ? updateWorkOrderRequest.getPlanQty()
+                      : workOrder.getQty(),
+              updateWorkOrderRequest.getStatus() != null
+                      ? updateWorkOrderRequest.getStatus()
+                      : workOrder.getStatus(),
+              updateWorkOrderRequest.getPlanAt() != null
+                      ? updateWorkOrderRequest.getPlanAt()
+                      : workOrder.getPlanAt()
+      );
+
+    //plan 수정 적용
+    productionPlan.updateForWorkOrder(user, updateWorkOrderRequest.getRemark() != null ?
+          updateWorkOrderRequest.getRemark() : productionPlan.getRemark());
+
+    return toWorkOrderResponse(workOrder);
+  }
 
 
-    WorkOrder updatedWorkOrder = WorkOrder.builder()
-        .id(workOrder.getId())
-        .item(item)
-        .warehouse(warehouse)
-        .productionPlan(productionPlan)
-        .qty(
-            updateWorkOrderRequest.getPlanQty() != null ?
-                updateWorkOrderRequest.getPlanQty() : workOrder.getQty()
-        )
-        .documentNo(workOrder.getDocumentNo())
-        .status(
-            updateWorkOrderRequest.getStatus() != null ?
-                updateWorkOrderRequest.getStatus() : workOrder.getStatus()
-        )
+  //작업지시 승인 - 생산실적을 생성하는 경우(수정 api와 분리) / 생산 시작
+  @Override
+  @Transactional
+  public WorkOrderResponse approveWorkOrder(final Long id) {
 
-        .planAt(
-            updateWorkOrderRequest.getPlanAt() != null ?
-                updateWorkOrderRequest.getPlanAt() : workOrder.getPlanAt()
-        )
+    //id 유효
+    WorkOrder workOrder = workOrderRepository.findById(id)
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
 
-        .producedAt(updateWorkOrderRequest.getProducedAt() != null ?
-            updateWorkOrderRequest.getProducedAt() : workOrder.getProducedAt()
-        )
+    //status 확인
+    if(workOrder.getStatus() == Status.APPROVED || workOrder.getStatus() == Status.COMPLETED)
+      throw new CustomException(ErrorCode.WORKORDER_NOT_APPROVABLE);
 
-        .isDeleted(false)
-        .build();
+    //approved 부터 작업지시 수정 x
 
-    //plan에 수정 반영될 부분
-    productionPlan.setUser(user);
-    productionPlan.setRemark(updateWorkOrderRequest.getRemark() != null ?
-        updateWorkOrderRequest.getRemark() : productionPlan.getRemark());
+    return toWorkOrderResponse(workOrder);
+  }
 
+  //complete - 실제 생산 종료
+  @Override
+  @Transactional
+  public void completeWorkOrder(final Long id, final CompleteWorkOrderRequest completeWorkOrderRequest){
+    WorkOrder workOrder = workOrderRepository.findById(id)
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
 
-    if(updatedWorkOrder.getStatus() == Status.APPROVED) {
-
-      ProductionResult productionResult = productionResultService.createProductionResultByWorkOrder(updatedWorkOrder, updateWorkOrderRequest.getProducedQty());
-      updatedWorkOrder.setProductionResult(productionResult);
-      //stock movement 저장은 produce stock에서
-      stockMovementService.createProduceStockMovement(updatedWorkOrder);
-
-      productionPlan.setStatus(com.domino.smerp.productionplan.constants.Status.COMPLETED);
-      updatedWorkOrder.setStatus(Status.COMPLETED);
-
-
+    if(workOrder.getStatus() != Status.APPROVED) {
+      throw new CustomException(ErrorCode.WORKORDER_COMPLETE_NOT_AVAILABLE);
     }
 
-    workOrderRepository.save(updatedWorkOrder);
+    //작업지시에 대한 중복된 생산실적 생성 x
+    if (workOrder.getProductionResult() != null) {
+      throw new CustomException(ErrorCode.PRODUCTION_RESULT_DUPLICATE_FOR_WORK_ORDER);
+    }
 
-    return toWorkOrderResponse(updatedWorkOrder);
+    workOrder.getProductionPlan().complete();
+
+    //생산실적 생성
+    //TODO : 생산실적 안으로 재고, 수불을 넣게 되면 생산실적이 알아야하는 내용이 커짐 (생산실적만 생성하는 것이 아님을 숨기게 됨)
+    try {
+      ProductionResult productionResult =
+              productionResultService.createProductionResultByWorkOrder(workOrder, completeWorkOrderRequest.getProducedQty());
+      workOrder.complete(productionResult);
+
+    } catch (DataIntegrityViolationException e) { //Unique 제약조건에 대한 예외 처리
+      throw new CustomException(ErrorCode.PRODUCTION_RESULT_DUPLICATE_FOR_WORK_ORDER);
+    }
+
+    //재고 생성
+
+    //재고 수불 생성
+
+  }
+
+  //return
+  @Override
+  @Transactional
+  public void returnWorkOrder(final Long id) {
+
+    WorkOrder workOrder = workOrderRepository.findById(id)
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
+
+    //승인, 완료 시는 작업지시를 취소 불가
+    if(workOrder.getStatus() != Status.PENDING) {
+      throw new CustomException(ErrorCode.WORKORDER_RETURN_NOT_AVAILABLE);
+    }
+
+    else {
+      workOrder.setStatus(Status.RETURNED);
+    }
   }
 
 
@@ -322,8 +353,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   public WorkOrderResponse softDelete(final Long id) {
     //id 유효, 이미 soft delete x
     //7일 후 삭제
-    WorkOrder workOrder = workOrderRepository.findById(id)
-        .orElseThrow(() -> new  EntityNotFoundException("No work order of id: "));
+    WorkOrder workOrder = workOrderRepository.findByIdAndIsDeletedFalse(id)
+            .orElseThrow(() -> new EntityNotFoundException("No work order of id"));
 
     workOrder.setIsDeleted(true);
 
@@ -335,7 +366,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
   public void hardDeleteWorkOrder(final Long id){
 
     WorkOrder workOrder = workOrderRepository.findById(id)
-        .orElseThrow(() -> new  EntityNotFoundException("No work order of id: "));
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKORDER_NOT_FOUND));
 
     if(!workOrder.isDeleted())
       throw new IllegalArgumentException("work order is not softly deleted");
@@ -365,20 +396,20 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     String companyName = (client != null) ? client.getCompanyName() : null;
 
     return WorkOrderResponse.builder()
-        .id(workOrder.getId())
-        .companyName(companyName)
-        .userName(userName)
-        .documentNo(workOrder.getDocumentNo())
-        .itemName(workOrder.getItem().getName() != null ?
-            workOrder.getItem().getName() : null) //null 가능
-        .status(workOrder.getStatus())
-        .planQty(workOrder.getQty())
-        .producedQty(producedQty) //없다면 0
-        .planAt(workOrder.getPlanAt() != null ?
-            workOrder.getPlanAt() : null) //null 가능
-        .producedAt(producedAt)
-        .remark(workOrder.getProductionPlan().getRemark())
-        .build();
+            .id(workOrder.getId())
+            .companyName(companyName)
+            .userName(userName)
+            .documentNo(workOrder.getDocumentNo())
+            .itemName(workOrder.getItem().getName() != null ?
+                    workOrder.getItem().getName() : null) //null 가능
+            .status(workOrder.getStatus())
+            .planQty(workOrder.getQty())
+            .producedQty(producedQty) //없다면 0
+            .planAt(workOrder.getPlanAt() != null ?
+                    workOrder.getPlanAt() : null) //null 가능
+            .producedAt(producedAt)
+            .remark(workOrder.getProductionPlan().getRemark())
+            .build();
   }
 
   public CurrentWorkOrderResponse toCurrentWorkOrderResponse(final WorkOrder workOrder) {
@@ -401,17 +432,17 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     String companyName = (client != null) ? client.getCompanyName() : null;
 
     return CurrentWorkOrderResponse.builder()
-        .id(workOrder.getId())
-        .companyName(companyName)
-        .userName(userName)
-        .documentNo(workOrder.getDocumentNo())
-        .itemName(workOrder.getItem().getName() != null ?
-            workOrder.getItem().getName() : null) //null 가능
-        .status(workOrder.getStatus())
-        .planQty(workOrder.getQty())
-        .planAt(workOrder.getPlanAt() != null ?
-            workOrder.getPlanAt() : null) //null 가능
-        .build();
+            .id(workOrder.getId())
+            .companyName(companyName)
+            .userName(userName)
+            .documentNo(workOrder.getDocumentNo())
+            .itemName(workOrder.getItem().getName() != null ?
+                    workOrder.getItem().getName() : null) //null 가능
+            .status(workOrder.getStatus())
+            .planQty(workOrder.getQty())
+            .planAt(workOrder.getPlanAt() != null ?
+                    workOrder.getPlanAt() : null) //null 가능
+            .build();
 
   }
 

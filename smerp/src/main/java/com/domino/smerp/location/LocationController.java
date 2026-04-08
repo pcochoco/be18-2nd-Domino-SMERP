@@ -22,18 +22,18 @@ public class LocationController {
   //fill
   @PatchMapping("/fill")
   public ResponseEntity<LocationIdListResponse> fillLocations(
-      @RequestBody LocationIdListRequest locationIdListRequest) {
+          @RequestBody LocationIdListRequest locationIdListRequest) {
     LocationIdListResponse locationIdListResponse = locationService.fillLocations(
-        locationIdListRequest);
+            locationIdListRequest);
     return ResponseEntity.status(200).body(locationIdListResponse);
   }
 
   //unfill
   @PatchMapping("/unfill")
   public ResponseEntity<LocationIdListResponse> unFillLocations(
-      @RequestBody LocationIdListRequest locationIdListRequest) {
+          @RequestBody LocationIdListRequest locationIdListRequest) {
     LocationIdListResponse locationIdListResponse = locationService.unFillLocations(
-        locationIdListRequest);
+            locationIdListRequest);
     return ResponseEntity.status(200).body(locationIdListResponse);
   }
 

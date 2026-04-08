@@ -1,6 +1,7 @@
 package com.domino.smerp.workorder.service;
 
 import com.domino.smerp.common.dto.PageResponse;
+import com.domino.smerp.workorder.dto.request.CompleteWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.CreateWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.SearchWorkOrderRequest;
 import com.domino.smerp.workorder.dto.request.UpdateWorkOrderRequest;
@@ -10,16 +11,18 @@ import com.domino.smerp.workorder.dto.response.WorkOrderListResponse;
 import com.domino.smerp.workorder.dto.response.WorkOrderResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
+
 public interface WorkOrderService {
 
   //목록 조회
   WorkOrderListResponse getAllWorkOrders();
 
   PageResponse<SearchWorkOrderListResponse> searchWorkOrders(
-      final SearchWorkOrderRequest keyword,
-      final Pageable pageable);
+          final SearchWorkOrderRequest keyword,
+          final Pageable pageable);
 
-    //상세 조회
+  //상세 조회
   WorkOrderResponse getWorkOrderById(final Long id);
 
   CurrentWorkOrderListResponse getAllCurrentWorkOrders();
@@ -31,6 +34,15 @@ public interface WorkOrderService {
 
   //수정
   WorkOrderResponse updateWorkOrder(final Long id, final UpdateWorkOrderRequest updateWorkOrderRequest);
+
+  //승인
+  WorkOrderResponse approveWorkOrder(final Long id);
+
+  //완료
+  void completeWorkOrder(final Long id, final CompleteWorkOrderRequest completeWorkOrderRequest);
+
+  //반려
+  void returnWorkOrder(final Long id);
 
   //삭제
   WorkOrderResponse softDelete(final Long id);

@@ -62,22 +62,22 @@ public class Location {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "warehouse_id",
-      nullable = false,
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          nullable = false,
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private Warehouse warehouse;
 
   public static Location create(String rackNo, String levelNo, String binNo, String binRfid,
-      Warehouse warehouse) {
+                                Warehouse warehouse) {
 
     return Location.builder()
-        .rackNo(rackNo)
-        .levelNo(levelNo)
-        .binNo(binNo)
-        .binRfid(binRfid)
-        .filled(false)
-        .warehouse(warehouse)
-        .build();
+            .rackNo(rackNo)
+            .levelNo(levelNo)
+            .binNo(binNo)
+            .binRfid(binRfid)
+            .filled(false)
+            .warehouse(warehouse)
+            .build();
   }
 
   public void setFilled(boolean filled) {

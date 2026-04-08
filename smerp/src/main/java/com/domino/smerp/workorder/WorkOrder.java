@@ -47,22 +47,22 @@ public class WorkOrder extends BaseEntity {
   //창고
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "warehouse_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private Warehouse warehouse;
 
   //품목 - 같은 품목에 대해 여러 작업지시 가능
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "item_id",
-    foreignKey =  @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey =  @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private Item item;
 
   //생산계획
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "pp_id",
-    nullable = false,
-    foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          nullable = false,
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private ProductionPlan productionPlan;
 
@@ -112,6 +112,25 @@ public class WorkOrder extends BaseEntity {
     if (productionResult != null) {
       productionResult.setWorkOrder(this);
     }
+  }
+
+  public void update(
+          Warehouse warehouse,
+          ProductionPlan productionPlan,
+          BigDecimal qty,
+          Status status,
+          Instant planAt
+  ) {
+    this.warehouse = warehouse;
+    this.productionPlan = productionPlan;
+    this.qty = qty;
+    this.status = status;
+    this.planAt = planAt;
+  }
+
+  public void complete(ProductionResult productionResult) {
+    this.productionResult = productionResult;
+    this.status = Status.COMPLETED;
   }
 
 }

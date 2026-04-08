@@ -43,19 +43,19 @@ public class Stock extends BaseEntity {
   //lot no
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "lot_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private LotNumber lotNumber;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "location_id",
-    foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private Location location;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "item_id",
-    foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private Item item;
 
@@ -78,9 +78,9 @@ public class Stock extends BaseEntity {
   //item 생성하는 로직 시 stock까지 create 하도록 확인
   public static Stock create(Item item){
     return Stock.builder()
-        .item(item)
-        .qty(BigDecimal.ZERO)
-        .build();
+            .item(item)
+            .qty(BigDecimal.ZERO)
+            .build();
 
   }
 
@@ -89,7 +89,7 @@ public class Stock extends BaseEntity {
   }
 
   public void setCurrentQty(BigDecimal qty){
-    this.qty = qty;
+    this.currentQty = qty;
   }
 
   public void setLotNumber(LotNumber lotNumber){

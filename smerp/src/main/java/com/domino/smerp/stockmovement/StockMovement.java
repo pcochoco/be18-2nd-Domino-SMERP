@@ -44,35 +44,35 @@ public class StockMovement extends BaseEntity {
   //출발 창고
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "depart_warehouse_id",
-    foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private Warehouse departWarehouse;
 
   //도착 창고
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "arrive_warehouse_id",
-    foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private Warehouse arriveWarehouse;
 
   //사용자 - 거래처
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id",
-    foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private User user;
 
   //lot no - 주문, 판매 등은 null 가능
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "lot_id",
-    foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private LotNumber lotNumber;
 
   //생산 실적
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "pr_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private ProductionResult productionResult;
 

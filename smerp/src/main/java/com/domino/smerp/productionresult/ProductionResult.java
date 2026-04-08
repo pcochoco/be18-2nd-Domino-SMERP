@@ -1,25 +1,16 @@
 package com.domino.smerp.productionresult;
 
 import com.domino.smerp.common.BaseEntity;
+import com.domino.smerp.common.exception.CustomException;
+import com.domino.smerp.common.exception.ErrorCode;
 import com.domino.smerp.item.Item;
 import com.domino.smerp.productionresult.dto.request.CreateProductionResultRequest;
 import com.domino.smerp.productionresult.dto.request.UpdateProductionResultRequest;
 import com.domino.smerp.user.User;
 import com.domino.smerp.warehouse.Warehouse;
 import com.domino.smerp.workorder.WorkOrder;
-import jakarta.persistence.Column;
-import jakarta.persistence.ConstraintMode;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -35,7 +26,11 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "production_result")
+@Table(name = "production_result",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_production_result_work_order", columnNames = "work_order_id")
+        }
+)
 @ToString(onlyExplicitlyIncluded = true)
 public class ProductionResult extends BaseEntity {
   @Id
@@ -46,23 +41,23 @@ public class ProductionResult extends BaseEntity {
   //품목
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "item_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
-      nullable = false
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
+          nullable = false
   )
   private Item item;
 
   //사용자
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private User user;
 
   //출발 창고
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "depart_warehouse_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
-      nullable = false
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
+          nullable = false
   )
   private Warehouse departWarehouse;
 
@@ -71,7 +66,7 @@ public class ProductionResult extends BaseEntity {
   //작업지시 - 생산계획 쪽에서 필요한 정보
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "wo_id",
-      foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
   )
   private WorkOrder workOrder;
 
@@ -101,6 +96,9 @@ public class ProductionResult extends BaseEntity {
     }
   }
 
-
-
+  public void setQty(BigDecimal qty){
+    if(qty.equals(BigDecimal.ZERO))
+      throw new CustomException(ErrorCode.QTY_UNDER_ZERO);
+    this.qty = qty;
+  }
 }

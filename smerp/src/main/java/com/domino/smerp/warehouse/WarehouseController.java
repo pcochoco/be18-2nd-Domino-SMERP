@@ -1,19 +1,16 @@
+
 package com.domino.smerp.warehouse;
 
-import com.domino.smerp.common.dto.PageResponse;
-import com.domino.smerp.item.dto.request.SearchItemRequest;
-import com.domino.smerp.item.dto.response.ItemListResponse;
 import com.domino.smerp.location.dto.response.LocationListResponse;
 import com.domino.smerp.location.service.LocationService;
-import com.domino.smerp.warehouse.dto.request.SearchWarehouseRequest;
-import com.domino.smerp.warehouse.dto.request.WarehouseRequest;
+import com.domino.smerp.warehouse.dto.request.CreateWarehouseRequest;
+import com.domino.smerp.warehouse.dto.request.UpdateWarehouseRequest;
 import com.domino.smerp.warehouse.dto.response.WarehouseIdListResponse;
-import com.domino.smerp.warehouse.dto.response.WarehouseListResponse;
 import com.domino.smerp.warehouse.dto.response.WarehouseResponse;
 import com.domino.smerp.warehouse.service.WarehouseService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +32,7 @@ public class WarehouseController {
   //창고 생성
   @PostMapping
   public ResponseEntity<WarehouseResponse> createWarehouse(
-      @RequestBody WarehouseRequest warehouseRequest) {
+          @Valid @RequestBody CreateWarehouseRequest warehouseRequest) {
     WarehouseResponse warehouseResponse = warehouseService.createWarehouse(warehouseRequest);
     return ResponseEntity.status(201).body(warehouseResponse);
   }
@@ -52,7 +49,7 @@ public class WarehouseController {
   //창고 위치 중 unfilled 조회
   @GetMapping("/{warehouse-id}/unfilled")
   public ResponseEntity<LocationListResponse> getUnFilledLocations(
-      @PathVariable("warehouse-id") Long warehouseId) {
+          @PathVariable("warehouse-id") Long warehouseId) {
     LocationListResponse locationListResponse = locationService.getUnFilledLocations(warehouseId);
 
     return ResponseEntity.status(200).body(locationListResponse);
@@ -69,7 +66,7 @@ public class WarehouseController {
   //창고 상세 조회
   @GetMapping("/{warehouse-id}")
   public ResponseEntity<WarehouseResponse> getWarehouse(
-      @PathVariable("warehouse-id") Long warehouseId) {
+          @PathVariable("warehouse-id") Long warehouseId) {
     WarehouseResponse warehouseResponse = warehouseService.getWarehouseById(warehouseId);
     return ResponseEntity.status(200).body(warehouseResponse);
   }
@@ -77,11 +74,11 @@ public class WarehouseController {
   //창고 수정
   @PatchMapping("/{warehouse-id}")
   public ResponseEntity<WarehouseResponse> updateWarehouse(
-      @PathVariable("warehouse-id") Long warehouseId,
-      @RequestBody WarehouseRequest warehouseRequest
+          @PathVariable("warehouse-id") Long warehouseId,
+          @Valid @RequestBody UpdateWarehouseRequest warehouseRequest
   ) {
     WarehouseResponse warehouseResponse = warehouseService.updateWarehouse(warehouseId,
-        warehouseRequest);
+            warehouseRequest);
     return ResponseEntity.status(200).body(warehouseResponse);
   }
 

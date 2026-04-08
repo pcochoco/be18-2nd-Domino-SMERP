@@ -39,8 +39,8 @@ public class ProductionPlanController {
   //검색
   @GetMapping("/search")
   public ResponseEntity<PageResponse<SearchProductionPlanListResponse>> getLotNumbers(
-      final @ModelAttribute SearchProductionPlanRequest keyword,
-      final Pageable pageable) {
+          final @ModelAttribute SearchProductionPlanRequest keyword,
+          final Pageable pageable) {
     return ResponseEntity.ok(productionPlanService.searchProductionPlans(keyword, pageable));
   }
 
@@ -48,7 +48,7 @@ public class ProductionPlanController {
   //상세 조회
   @GetMapping("/{plan-id}")
   public ResponseEntity<ProductionPlanResponse> getProductionPlan(
-      @PathVariable("plan-id") Long planId) {
+          @PathVariable("plan-id") Long planId) {
     ProductionPlanResponse productionPlanResponse = productionPlanService.getProductionPlan(planId);
     return ResponseEntity.status(200).body(productionPlanResponse);
   }
@@ -56,19 +56,19 @@ public class ProductionPlanController {
   //생성
   @PostMapping
   public ResponseEntity<ProductionPlanResponse> createProductionPlan(
-      @Valid @RequestBody CreateProductionPlanRequest createProductionPlanRequest) {
+          @Valid @RequestBody CreateProductionPlanRequest createProductionPlanRequest) {
     ProductionPlanResponse productionPlanResponse = productionPlanService.createProductionPlan(
-        createProductionPlanRequest);
+            createProductionPlanRequest);
     return ResponseEntity.status(201).body(productionPlanResponse);
   }
 
   //수정
   @PatchMapping("/{plan-id}")
   public ResponseEntity<ProductionPlanResponse> updateProductionPlan(
-      @PathVariable("plan-id") Long planId,
-      @Valid @RequestBody UpdateProductionPlanRequest updateProductionPlanRequest) {
+          @PathVariable("plan-id") Long planId,
+          @Valid @RequestBody UpdateProductionPlanRequest updateProductionPlanRequest) {
     ProductionPlanResponse productionPlanResponse = productionPlanService.updateProductionPlan(
-        planId, updateProductionPlanRequest);
+            planId, updateProductionPlanRequest);
     return ResponseEntity.status(200).body(productionPlanResponse);
   }
 
